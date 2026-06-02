@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>RBAC & Autentikasi — UT-RIS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#f0f4f8; padding:24px; }
+  .header { background:linear-gradient(135deg,#7c3aed,#9333ea); color:white; padding:24px 32px; border-radius:12px; margin-bottom:24px; }
+  .header h1 { font-size:24px; font-weight:700; }
+  .header p { opacity:.85; margin-top:6px; font-size:14px; }
+  .badge { display:inline-block; background:rgba(255,255,255,.2); padding:3px 10px; border-radius:20px; font-size:12px; margin-top:8px; margin-right:6px; }
+  .card { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08); padding:24px; margin-bottom:24px; }
+  .card h2 { font-size:16px; font-weight:600; color:#1e3a5f; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; }
+  .mermaid { display:flex; justify-content:center; overflow-x:auto; }
+  .footer { text-align:center; color:#888; font-size:12px; margin-top:24px; }
+
+  /* RBAC Matrix Table */
+  .matrix { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .matrix th { background:#1e3a5f; color:white; padding:10px 14px; text-align:center; }
+  .matrix th:first-child { text-align:left; }
+  .matrix td { padding:9px 14px; border-bottom:1px solid #e2e8f0; text-align:center; }
+  .matrix tr:hover td { background:#f8fafc; }
+  .matrix td:first-child { text-align:left; font-weight:500; color:#374151; }
+  .yes { color:#16a34a; font-weight:700; font-size:16px; }
+  .no  { color:#dc2626; font-size:16px; }
+  .role-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; }
+  .admin { background:#fee2e2; color:#991b1b; }
+  .radiolog { background:#dbeafe; color:#1e40af; }
+  .dokter { background:#dcfce7; color:#14532d; }
+  .resep { background:#fef9c3; color:#854d0e; }
+  .patient { background:#f3e8ff; color:#6b21a8; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔐 RBAC & Sistem Autentikasi</h1>
+  <p>Role-Based Access Control · JWT Dual Token · BCrypt Password · Token Blacklist</p>
+  <span class="badge">5 Roles</span>
+  <span class="badge">JWT + jti Blacklist</span>
+  <span class="badge">Sesuai PMK 24/2022</span>
+</div>
+
+<!-- Auth Flow -->
+<div class="card">
+  <h2>Alur Autentikasi JWT (Login → Akses → Refresh → Logout)</h2>
+  <div class="mermaid">
+sequenceDiagram
+    actor Client as Client (Browser)
+    participant API as FastAPI Backend
+    participant DB as Database
+    participant BL as Token Blacklist
+
+    Note over Client,BL: === LOGIN ===
+    Client->>API: POST /auth/login {username, password}
+    API->>DB: SELECT user WHERE username=?
+    DB-->>API: user row
+    API->>API: BCrypt.verify(password, hash)\nTiming-safe (anti-enumeration)
+    API-->>Client: 200 OK\n{access_token (30 mnt, jti=uuid4),\n refresh_token (7 hari, jti=uuid4),\n user:{id,role,...}}
+
+    Note over Client,BL: === REQUEST TERAUTENTIKASI ===
+    Client->>API: GET /api/v1/* \nAuthorization: Bearer {access_token}
+    API->>API: decode_token() → payload\ncek type=="access"\ncek jti not in BLACKLIST\ncek user.is_active\ncek RBAC permission
+    API-->>Client: 200 OK / 403 Forbidden
+
+    Note over Client,BL: === SILENT REFRESH (token expired) ===
+    Client->>API: POST /auth/refresh {refresh_token}
+    API->>API: decode refresh_token\ncek type=="refresh"\ncek jti not blacklisted
+    API->>DB: get user (still active?)
+    DB-->>API: user OK
+    API-->>Client: 200 OK {new_access_token (jti baru)}
+
+    Note over Client,BL: === LOGOUT ===
+    Client->>API: POST /auth/logout {refresh_token}
+    API->>API: decode token → ambil jti
+    API->>BL: blacklist_token(jti)
+    BL-->>API: added to TOKEN_BLACKLIST set
+    API-->>Client: 200 OK {message: "Logout berhasil"}
+    Note over BL: Token lama tidak bisa\ndigunakan lagi
+  </div>
+</div>
+
+<!-- RBAC Matrix -->
+<div class="card">
+  <h2>Matriks Hak Akses (Permission Matrix) — RBAC</h2>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th>Resource / Aksi</th>
+        <th><span class="role-badge admin">Admin</span></th>
+        <th><span class="role-badge radiolog">Radiolog</span></th>
+        <th><span class="role-badge dokter">Dokter</span></th>
+        <th><span class="role-badge resep">Resepsionis</span></th>
+        <th><span class="role-badge patient">Patient</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="6" style="background:#f8fafc;font-size:11px;color:#64748b;padding:6px 14px;font-weight:600">👤 USER MANAGEMENT</td></tr>
+      <tr><td>Lihat daftar user</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>Buat / Edit / Hapus user</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+
+      <tr><td colspan="6" style="background:#f8fafc;font-size:11px;color:#64748b;padding:6px 14px;font-weight:600">🧑‍⚕️ MANAJEMEN PASIEN</td></tr>
+      <tr><td>Lihat data pasien</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+      <tr><td>Daftarkan pasien baru</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td><td class="no">✗</td></tr>
+      <tr><td>Edit data pasien</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td><td class="no">✗</td></tr>
+      <tr><td>Hapus data pasien</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+
+      <tr><td colspan="6" style="background:#f8fafc;font-size:11px;color:#64748b;padding:6px 14px;font-weight:600">📅 JADWAL (APPOINTMENT)</td></tr>
+      <tr><td>Lihat jadwal</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+      <tr><td>Buat jadwal</td><td class="yes">✓</td><td class="no">✗</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+      <tr><td>Edit / Batalkan jadwal</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td><td class="no">✗</td></tr>
+
+      <tr><td colspan="6" style="background:#f8fafc;font-size:11px;color:#64748b;padding:6px 14px;font-weight:600">🩻 PEMERIKSAAN (STUDY)</td></tr>
+      <tr><td>Lihat pemeriksaan</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+      <tr><td>Buat pemeriksaan</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>Update status pemeriksaan</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>Akses data PACS/DICOM</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+
+      <tr><td colspan="6" style="background:#f8fafc;font-size:11px;color:#64748b;padding:6px 14px;font-weight:600">📄 LAPORAN RADIOLOGI</td></tr>
+      <tr><td>Lihat laporan</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>Buat laporan</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>Finalisasi laporan</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>Export PDF (staf)</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+
+      <tr><td colspan="6" style="background:#f8fafc;font-size:11px;color:#64748b;padding:6px 14px;font-weight:600">🏥 PORTAL PASIEN</td></tr>
+      <tr><td>Lihat profil sendiri</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Lihat pemeriksaan sendiri</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Lihat laporan FINALIZED saja</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Download PDF laporan sendiri</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px;color:#64748b;margin-top:10px">* Implementasi sesuai amanat PMK No. 24 Tahun 2022 tentang Rekam Medis Elektronik</p>
+</div>
+
+<!-- Role diagram -->
+<div class="card">
+  <h2>Hierarki Peran dan Akses Sistem</h2>
+  <div class="mermaid">
+graph LR
+    subgraph ROLES["5 Peran Sistem"]
+        A["👑 Admin\nFull Access"]
+        B["🩻 Radiolog\nStudy + Report"]
+        C["👨‍⚕️ Dokter\nRead + Appointment"]
+        D["🗂️ Resepsionis\nPatient + Jadwal"]
+        E["🧑 Patient\nPortal Sendiri"]
+    end
+
+    subgraph RESOURCES["Resource yang Dilindungi"]
+        R1[Users]
+        R2[Patients]
+        R3[Appointments]
+        R4[Studies]
+        R5[Reports]
+        R6[Portal Pasien]
+        R7[PACS/DICOM]
+        R8[Dashboard Stats]
+    end
+
+    A -->|CRUD| R1
+    A -->|CRUD| R2
+    A -->|CRUD| R3
+    A -->|CRUD| R4
+    A -->|CRUD| R5
+    A -->|Read| R7
+    A -->|Read| R8
+
+    B -->|Read| R2
+    B -->|Read| R3
+    B -->|CRUD| R4
+    B -->|CRUD| R5
+    B -->|Read| R7
+    B -->|Read| R8
+
+    C -->|Read| R2
+    C -->|Create/Read| R3
+    C -->|Read| R4
+    C -->|Read| R5
+    C -->|Read| R7
+    C -->|Read| R8
+
+    D -->|CRU| R2
+    D -->|CRUD| R3
+    D -->|Read| R4
+    D -->|Read| R8
+
+    E -->|Own data| R6
+
+    style A fill:#fee2e2,stroke:#dc2626
+    style B fill:#dbeafe,stroke:#3b82f6
+    style C fill:#dcfce7,stroke:#22c55e
+    style D fill:#fef9c3,stroke:#eab308
+    style E fill:#f3e8ff,stroke:#a855f7
+  </div>
+</div>
+
+<div class="footer">UT-RIS Capstone Project · Kelompok C · Universitas Terbuka 2026</div>
+<script>mermaid.initialize({startOnLoad:true,theme:'default'});</script>
+</body>
+</html>

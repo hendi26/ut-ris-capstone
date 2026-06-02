@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Arsitektur Sistem — UT-RIS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#f0f4f8; padding:24px; }
+  .header { background:linear-gradient(135deg,#1e40af,#7c3aed); color:white; padding:24px 32px; border-radius:12px; margin-bottom:24px; }
+  .header h1 { font-size:24px; font-weight:700; }
+  .header p { opacity:.85; margin-top:6px; font-size:14px; }
+  .badge { display:inline-block; background:rgba(255,255,255,.2); padding:3px 10px; border-radius:20px; font-size:12px; margin-top:8px; margin-right:6px; }
+  .card { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08); padding:24px; margin-bottom:24px; }
+  .card h2 { font-size:16px; font-weight:600; color:#1e3a5f; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; }
+  .mermaid { display:flex; justify-content:center; overflow-x:auto; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:768px){.grid2{grid-template-columns:1fr;}}
+  .footer { text-align:center; color:#888; font-size:12px; margin-top:24px; }
+  .tech-stack { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+  .tech { padding:6px 14px; border-radius:8px; font-size:13px; font-weight:500; }
+  .t-blue { background:#dbeafe; color:#1d4ed8; }
+  .t-green { background:#dcfce7; color:#16a34a; }
+  .t-purple { background:#f3e8ff; color:#7c3aed; }
+  .t-orange { background:#ffedd5; color:#ea580c; }
+  .t-gray { background:#f1f5f9; color:#475569; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🏗️ Arsitektur Sistem UT-RIS</h1>
+  <p>Three-Tier Architecture · Clean Architecture Backend · React SPA Frontend</p>
+  <span class="badge">FastAPI + React 18</span>
+  <span class="badge">PostgreSQL + SQLAlchemy</span>
+  <span class="badge">Orthanc PACS</span>
+</div>
+
+<div class="card">
+  <h2>Arsitektur Three-Tier Keseluruhan</h2>
+  <div class="mermaid">
+graph TB
+    subgraph CLIENT["🖥️  PRESENTATION LAYER — React 18 + Vite (Port 5173)"]
+        UI1[Dashboard\nPer Role]
+        UI2[Manajemen\nPasien]
+        UI3[Jadwal &\nPemeriksaan]
+        UI4[Laporan\nRadiologi]
+        UI5[Portal\nPasien]
+        UI6[Integrasi\nPACS]
+    end
+
+    subgraph BACKEND["⚙️  BUSINESS LOGIC LAYER — FastAPI Python 3.11 (Port 8000)"]
+        subgraph API["API Layer"]
+            R1["/auth"] 
+            R2["/patients"]
+            R3["/appointments"]
+            R4["/studies"]
+            R5["/reports"]
+            R6["/pacs"]
+            R7["/patient"]
+        end
+        subgraph SVC["Service Layer"]
+            S1[AuthService]
+            S2[PatientService]
+            S3[StudyService]
+            S4[ReportService]
+            S5[PACSService]
+        end
+        subgraph SEC["Security Layer"]
+            SEC1[JWT + jti Blacklist]
+            SEC2[RBAC 5 Roles]
+            SEC3[BCrypt + CORS]
+        end
+        subgraph REPO["Repository Layer"]
+            RP1[UserRepo]
+            RP2[PatientRepo]
+            RP3[StudyRepo]
+            RP4[ReportRepo]
+        end
+    end
+
+    subgraph DATA["💾  DATA LAYER"]
+        DB[(PostgreSQL 15\nSQLite dev)]
+        PACS[Orthanc PACS\nPort 8042\nDICOMweb]
+        FS[File Storage\nuploads/studies]
+    end
+
+    CLIENT <-->|"REST API · JWT Bearer"| API
+    API --> SVC
+    SVC --> SEC
+    SVC --> REPO
+    REPO <-->|"SQLAlchemy Async"| DB
+    S5 <-->|"QIDO-RS / WADO-RS\nhttpx"| PACS
+    UI3 <-->|"static files"| FS
+
+    style CLIENT fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a
+    style BACKEND fill:#f0fdf4,stroke:#22c55e,color:#14532d
+    style DATA fill:#fef3c7,stroke:#f59e0b,color:#78350f
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Clean Architecture Backend (4 Layer)</h2>
+    <div class="mermaid">
+graph TD
+    A["🌐 API Layer\nEndpoints + Pydantic Schemas\nHTTP Request/Response"] 
+    B["⚡ Service Layer\nBusiness Logic + Validation\nWorkflow Rules"]
+    C["🔒 Security Layer\nJWT · RBAC · BCrypt"]
+    D["🗄️ Repository Layer\nData Access + Queries\nSQLAlchemy ORM"]
+    E["💾 Database\nPostgreSQL / SQLite"]
+
+    A -->|"calls"| B
+    B -->|"uses"| C
+    B -->|"calls"| D
+    D -->|"queries"| E
+
+    style A fill:#dbeafe,stroke:#3b82f6
+    style B fill:#f0fdf4,stroke:#22c55e
+    style C fill:#fef3c7,stroke:#f59e0b
+    style D fill:#fce7f3,stroke:#ec4899
+    style E fill:#ede9fe,stroke:#8b5cf6
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Frontend State Management</h2>
+    <div class="mermaid">
+graph TD
+    A["🖥️ React Components\nPages + Components"]
+    B["🔄 TanStack Query\nServer State Cache\nAuto Refetch 30s"]
+    C["🗃️ Zustand Store\nAuth State\nPersist localStorage"]
+    D["🌐 Axios Instance\nBearer Token Inject\nSilent Refresh 401"]
+    E["⚙️ FastAPI Backend"]
+
+    A -->|"useQuery\nuseMutation"| B
+    A -->|"useAuthStore"| C
+    B -->|"via api.ts"| D
+    C -->|"token inject"| D
+    D <-->|"HTTP/REST"| E
+
+    style A fill:#dbeafe,stroke:#3b82f6
+    style B fill:#f0fdf4,stroke:#22c55e
+    style C fill:#fce7f3,stroke:#ec4899
+    style D fill:#fef3c7,stroke:#f59e0b
+    style E fill:#ede9fe,stroke:#8b5cf6
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Tech Stack yang Digunakan</h2>
+  <div class="tech-stack">
+    <span class="tech t-blue">React 18 + Vite</span>
+    <span class="tech t-blue">TailwindCSS</span>
+    <span class="tech t-blue">TanStack Query v5</span>
+    <span class="tech t-blue">Zustand</span>
+    <span class="tech t-blue">React Hook Form</span>
+    <span class="tech t-green">FastAPI (Python 3.11)</span>
+    <span class="tech t-green">SQLAlchemy 2.0 Async</span>
+    <span class="tech t-green">Pydantic v2</span>
+    <span class="tech t-green">Alembic</span>
+    <span class="tech t-green">ReportLab (PDF)</span>
+    <span class="tech t-purple">PostgreSQL 15</span>
+    <span class="tech t-purple">SQLite (dev)</span>
+    <span class="tech t-orange">Orthanc PACS</span>
+    <span class="tech t-orange">DICOMweb (QIDO-RS/WADO-RS)</span>
+    <span class="tech t-gray">Docker + Docker Compose</span>
+    <span class="tech t-gray">JWT + BCrypt</span>
+  </div>
+</div>
+
+<div class="footer">UT-RIS Capstone Project · Kelompok C · Universitas Terbuka 2026</div>
+<script>mermaid.initialize({startOnLoad:true,theme:'default',flowchart:{curve:'basis',padding:20}});</script>
+</body>
+</html>

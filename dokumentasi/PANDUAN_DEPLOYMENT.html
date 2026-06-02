@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Panduan Deployment — UT-RIS</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',Arial,sans-serif; background:#f8fafc; color:#1e293b; }
+.header { background:linear-gradient(135deg,#0f172a,#1e3a8a); color:white; padding:36px 48px; }
+.header h1 { font-size:26px; font-weight:800; }
+.header p { opacity:.8; margin-top:8px; font-size:14px; }
+.container { max-width:900px; margin:0 auto; padding:36px 32px; }
+.step { background:white; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.08); margin-bottom:28px; overflow:hidden; }
+.step-header { display:flex; align-items:center; gap:14px; padding:18px 24px; border-bottom:2px solid #f1f5f9; }
+.step-num { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; flex-shrink:0; }
+.step-title { font-size:16px; font-weight:700; color:#0f172a; }
+.step-sub { font-size:12px; color:#64748b; margin-top:2px; }
+.step-body { padding:20px 24px; }
+.platform { display:inline-flex; align-items:center; gap:6px; padding:3px 12px; border-radius:12px; font-size:12px; font-weight:700; margin-bottom:14px; }
+.vercel { background:#000; color:white; }
+.render { background:#46e3b7; color:#0f172a; }
+.neon { background:#00e599; color:#0f172a; }
+.github { background:#24292e; color:white; }
+pre { background:#0f172a; color:#e2e8f0; padding:14px 18px; border-radius:8px; font-size:12px; overflow-x:auto; line-height:1.7; margin:10px 0; }
+.hl { color:#7dd3fc; }
+.hl2 { color:#86efac; }
+.hl3 { color:#fde68a; }
+ol, ul { padding-left:20px; }
+li { font-size:13px; line-height:2; color:#374151; }
+.warn { background:#fffbeb; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:6px; font-size:13px; color:#78350f; margin:10px 0; }
+.info { background:#eff6ff; border-left:4px solid #3b82f6; padding:12px 16px; border-radius:6px; font-size:13px; color:#1e3a8a; margin:10px 0; }
+.success { background:#f0fdf4; border-left:4px solid #22c55e; padding:12px 16px; border-radius:6px; font-size:13px; color:#14532d; margin:10px 0; }
+table { width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; }
+th { background:#1e3a8a; color:white; padding:9px 14px; text-align:left; }
+td { padding:8px 14px; border-bottom:1px solid #e2e8f0; }
+code { background:#f1f5f9; padding:1px 6px; border-radius:4px; font-size:12px; font-family:monospace; color:#be185d; }
+.badge { display:inline-block; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:700; }
+.free { background:#dcfce7; color:#14532d; }
+.footer { text-align:center; color:#94a3b8; font-size:12px; padding:24px; border-top:1px solid #e2e8f0; margin-top:20px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🚀 Panduan Deployment UT-RIS ke Internet</h1>
+  <p>Frontend → Vercel &nbsp;|&nbsp; Backend → Render.com &nbsp;|&nbsp; Database → Neon PostgreSQL</p>
+</div>
+<div class="container">
+
+<div class="info">
+  <strong>Estimasi waktu:</strong> 30–45 menit &nbsp;|&nbsp;
+  <strong>Biaya:</strong> Semua platform gratis (free tier) &nbsp;|&nbsp;
+  <strong>Prasyarat:</strong> Akun GitHub
+</div>
+
+<!-- OVERVIEW -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#dbeafe;color:#1d4ed8">0</div>
+    <div><div class="step-title">Gambaran Arsitektur Deployment</div>
+    <div class="step-sub">Komponen yang akan di-deploy</div></div>
+  </div>
+  <div class="step-body">
+    <table>
+      <thead><tr><th>Komponen</th><th>Platform</th><th>URL Hasil</th><th>Biaya</th></tr></thead>
+      <tbody>
+        <tr><td>Frontend (React)</td><td>Vercel</td><td><code>utris-capstone.vercel.app</code></td><td><span class="badge free">Gratis</span></td></tr>
+        <tr><td>Backend (FastAPI)</td><td>Render.com</td><td><code>utris-backend.onrender.com</code></td><td><span class="badge free">Gratis</span></td></tr>
+        <tr><td>Database (PostgreSQL)</td><td>Neon.tech</td><td>Connection string</td><td><span class="badge free">Gratis</span></td></tr>
+        <tr><td>PACS (Orthanc)</td><td>Mock data</td><td>Fallback simulasi</td><td><span class="badge free">Gratis</span></td></tr>
+      </tbody>
+    </table>
+    <div class="warn"><strong>Catatan Render Free Tier:</strong> Backend akan "tidur" setelah 15 menit tidak diakses. Request pertama setelah tidur butuh ~30 detik untuk bangun. Ini normal untuk free tier.</div>
+  </div>
+</div>
+
+<!-- STEP 1: GITHUB -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#24292e;color:white">1</div>
+    <div>
+      <div class="step-title">Push ke GitHub</div>
+      <div class="step-sub">Vercel dan Render membaca kode dari GitHub</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <span class="platform github">GitHub</span>
+    <ol>
+      <li>Buat repository baru di <strong>github.com</strong> — misalnya <code>ut-ris-capstone</code></li>
+      <li>Buka terminal di folder project, jalankan:</li>
+    </ol>
+    <pre><span class="hl">cd</span> "d:\Capstone UT\Fix\UT-RIS_Capstone_fixed"
+<span class="hl">git</span> init
+<span class="hl">git</span> add .
+<span class="hl">git</span> commit -m "Initial commit: UT-RIS Capstone Project"
+<span class="hl">git</span> remote add origin https://github.com/USERNAME/ut-ris-capstone.git
+<span class="hl">git</span> branch -M main
+<span class="hl">git</span> push -u origin main</pre>
+    <div class="warn">Pastikan file <code>.gitignore</code> sudah ada dan menyertakan <code>.env</code>, <code>__pycache__</code>, <code>node_modules</code>, <code>*.db</code></div>
+  </div>
+</div>
+
+<!-- STEP 2: NEON DATABASE -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#00e599;color:#0f172a">2</div>
+    <div>
+      <div class="step-title">Setup Database PostgreSQL di Neon.tech</div>
+      <div class="step-sub">Database gratis, lebih stabil dari Render PostgreSQL free tier</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <span class="platform neon">Neon.tech</span>
+    <ol>
+      <li>Buka <strong>neon.tech</strong> → Sign up dengan GitHub</li>
+      <li>Klik <strong>"New Project"</strong></li>
+      <li>Isi:<br>
+        &nbsp;&nbsp;• Project name: <code>utris-capstone</code><br>
+        &nbsp;&nbsp;• Database name: <code>utris</code><br>
+        &nbsp;&nbsp;• Region: pilih <strong>Singapore (ap-southeast-1)</strong> — paling dekat Indonesia
+      </li>
+      <li>Klik <strong>"Create Project"</strong></li>
+      <li>Setelah dibuat, copy <strong>Connection String</strong> — terlihat seperti ini:</li>
+    </ol>
+    <pre><span class="hl3">postgresql://utris_owner:AbCdEfGh@ep-xxx.ap-southeast-1.aws.neon.tech/utris?sslmode=require</span></pre>
+    <div class="info">Simpan connection string ini — akan dipakai di Render nanti.</div>
+  </div>
+</div>
+
+<!-- STEP 3: RENDER BACKEND -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#46e3b7;color:#0f172a">3</div>
+    <div>
+      <div class="step-title">Deploy Backend ke Render.com</div>
+      <div class="step-sub">FastAPI Python — auto-deploy dari GitHub</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <span class="platform render">Render.com</span>
+    <ol>
+      <li>Buka <strong>render.com</strong> → Sign up dengan GitHub</li>
+      <li>Klik <strong>"New +"</strong> → pilih <strong>"Web Service"</strong></li>
+      <li>Pilih repository <code>ut-ris-capstone</code> dari GitHub</li>
+      <li>Isi konfigurasi:</li>
+    </ol>
+    <table>
+      <thead><tr><th>Field</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Name</td><td><code>utris-backend</code></td></tr>
+        <tr><td>Root Directory</td><td><code>backend</code></td></tr>
+        <tr><td>Runtime</td><td><code>Python 3</code></td></tr>
+        <tr><td>Build Command</td><td><code>pip install -r requirements.txt</code></td></tr>
+        <tr><td>Start Command</td><td><code>uvicorn app.main:app --host 0.0.0.0 --port $PORT</code></td></tr>
+        <tr><td>Instance Type</td><td><code>Free</code></td></tr>
+      </tbody>
+    </table>
+    <br>
+    <strong style="font-size:13px">Tambahkan Environment Variables:</strong>
+    <table style="margin-top:8px">
+      <thead><tr><th>Key</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td><code>ENVIRONMENT</code></td><td><code>production</code></td></tr>
+        <tr><td><code>DATABASE_URL</code></td><td><em>Connection string dari Neon (langkah 2)</em></td></tr>
+        <tr><td><code>SECRET_KEY</code></td><td><em>Klik "Generate" di Render, atau buat manual: 32+ karakter acak</em></td></tr>
+        <tr><td><code>CORS_ORIGINS</code></td><td><code>https://utris-capstone.vercel.app</code> (isi dulu, update setelah dapat URL Vercel)</td></tr>
+        <tr><td><code>ACCESS_TOKEN_EXPIRE_MINUTES</code></td><td><code>30</code></td></tr>
+        <tr><td><code>REFRESH_TOKEN_EXPIRE_DAYS</code></td><td><code>7</code></td></tr>
+        <tr><td><code>DEBUG</code></td><td><code>False</code></td></tr>
+      </tbody>
+    </table>
+    <br>
+    <ol start="5">
+      <li>Klik <strong>"Create Web Service"</strong> — Render akan build dan deploy otomatis</li>
+      <li>Tunggu hingga status menjadi <strong style="color:#16a34a">Live</strong> (5–10 menit)</li>
+      <li>Catat URL backend: <code>https://utris-backend.onrender.com</code></li>
+    </ol>
+    <div class="success">Test: buka <code>https://utris-backend.onrender.com/health</code> — harus return <code>{"status":"healthy"}</code></div>
+  </div>
+</div>
+
+<!-- STEP 4: VERCEL FRONTEND -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#000;color:white">4</div>
+    <div>
+      <div class="step-title">Deploy Frontend ke Vercel</div>
+      <div class="step-sub">React + Vite — auto-deploy, CDN global</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <span class="platform vercel">Vercel</span>
+    <ol>
+      <li>Buka <strong>vercel.com</strong> → Sign up dengan GitHub</li>
+      <li>Klik <strong>"Add New Project"</strong> → Import repository <code>ut-ris-capstone</code></li>
+      <li>Konfigurasi project:</li>
+    </ol>
+    <table>
+      <thead><tr><th>Field</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Framework Preset</td><td><code>Vite</code></td></tr>
+        <tr><td>Root Directory</td><td><code>frontend</code></td></tr>
+        <tr><td>Build Command</td><td><code>npm run build</code></td></tr>
+        <tr><td>Output Directory</td><td><code>dist</code></td></tr>
+        <tr><td>Install Command</td><td><code>npm install</code></td></tr>
+      </tbody>
+    </table>
+    <br>
+    <strong style="font-size:13px">Tambahkan Environment Variables di Vercel:</strong>
+    <table style="margin-top:8px">
+      <thead><tr><th>Key</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td><code>VITE_API_BASE_URL</code></td><td><code>https://utris-backend.onrender.com</code></td></tr>
+        <tr><td><code>VITE_APP_NAME</code></td><td><code>UT-RIS</code></td></tr>
+      </tbody>
+    </table>
+    <br>
+    <ol start="4">
+      <li>Klik <strong>"Deploy"</strong> — build otomatis berjalan (~2 menit)</li>
+      <li>Setelah selesai, catat URL Vercel: <code>https://utris-capstone.vercel.app</code></li>
+    </ol>
+    <div class="success">Test: buka URL Vercel → halaman login UT-RIS harus muncul</div>
+  </div>
+</div>
+
+<!-- STEP 5: UPDATE CORS -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#7c3aed;color:white">5</div>
+    <div>
+      <div class="step-title">Update CORS di Render</div>
+      <div class="step-sub">Izinkan frontend Vercel mengakses backend Render</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <ol>
+      <li>Buka Render dashboard → Service <code>utris-backend</code> → <strong>Environment</strong></li>
+      <li>Update value <code>CORS_ORIGINS</code> dengan URL Vercel yang sebenarnya:</li>
+    </ol>
+    <pre><span class="hl3">CORS_ORIGINS</span>=<span class="hl2">https://utris-capstone.vercel.app</span></pre>
+    <ol start="3">
+      <li>Klik <strong>Save Changes</strong> → Render akan auto-redeploy (~2 menit)</li>
+      <li>Test login dari URL Vercel dengan akun <code>admin / admin123</code></li>
+    </ol>
+    <div class="info">Jika URL Vercel berbeda (misal ada angka random), sesuaikan value CORS_ORIGINS dengan URL yang benar.</div>
+  </div>
+</div>
+
+<!-- STEP 6: SEED DATA -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#0369a1;color:white">6</div>
+    <div>
+      <div class="step-title">Seed Data Demo di Production</div>
+      <div class="step-sub">Isi database production dengan data demo untuk presentasi</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <p style="font-size:13px;color:#374151;margin-bottom:12px">
+      Admin user sudah di-seed otomatis saat startup. Untuk data demo (pasien, jadwal, pemeriksaan, laporan),
+      jalankan script seed via Render Shell:
+    </p>
+    <ol>
+      <li>Buka Render dashboard → Service <code>utris-backend</code> → <strong>Shell</strong></li>
+      <li>Jalankan perintah berikut di shell Render:</li>
+    </ol>
+    <pre><span class="hl">python</span> -c "
+import asyncio
+from app.db.session import AsyncSessionLocal
+from app.models.user import User, UserRole
+from app.core.security import get_password_hash
+from sqlalchemy import select
+
+async def seed():
+    async with AsyncSessionLocal() as db:
+        # Cek admin sudah ada
+        r = await db.execute(select(User).where(User.username=='admin'))
+        admin = r.scalar_one_or_none()
+        if admin:
+            print('Admin sudah ada, ID:', admin.id)
+        else:
+            print('Admin belum ada!')
+
+asyncio.run(seed())
+"</pre>
+    <div class="success">
+      <strong>Akun yang tersedia setelah deploy:</strong><br>
+      admin / admin123 (auto-seeded saat startup)
+    </div>
+    <div class="warn">
+      Data demo lengkap (5 pasien, jadwal, dll) perlu di-seed manual via Render Shell
+      menggunakan script <code>seed_demo.py</code> yang ada di folder backend.
+    </div>
+  </div>
+</div>
+
+<!-- STEP 7: VERIFY -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#16a34a;color:white">7</div>
+    <div>
+      <div class="step-title">Verifikasi Deployment</div>
+      <div class="step-sub">Checklist semua fitur berjalan di production</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <table>
+      <thead><tr><th>Test</th><th>URL</th><th>Expected</th></tr></thead>
+      <tbody>
+        <tr><td>Health check backend</td><td><code>/health</code></td><td><code>{"status":"healthy"}</code></td></tr>
+        <tr><td>Swagger API docs</td><td><code>/docs</code></td><td>Halaman Swagger terbuka</td></tr>
+        <tr><td>Login admin</td><td>Frontend → /login</td><td>Berhasil masuk ke dashboard</td></tr>
+        <tr><td>Lihat daftar pasien</td><td>Frontend → /patients</td><td>Data pasien muncul</td></tr>
+        <tr><td>PDF download</td><td>Portal Pasien → PDF</td><td>File PDF ter-download</td></tr>
+        <tr><td>PACS status</td><td>Frontend → /examinations</td><td>Banner "PACS Mode Simulasi"</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TROUBLESHOOTING -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#dc2626;color:white">!</div>
+    <div>
+      <div class="step-title">Troubleshooting Umum</div>
+      <div class="step-sub">Solusi masalah yang sering muncul</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <table>
+      <thead><tr><th>Masalah</th><th>Penyebab</th><th>Solusi</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Login gagal CORS error</td>
+          <td>CORS_ORIGINS belum di-update</td>
+          <td>Update env var CORS_ORIGINS di Render dengan URL Vercel yang benar</td>
+        </tr>
+        <tr>
+          <td>Backend 500 saat startup</td>
+          <td>DATABASE_URL salah atau DB belum siap</td>
+          <td>Cek Render logs, pastikan Neon connection string benar dan include <code>?sslmode=require</code></td>
+        </tr>
+        <tr>
+          <td>Halaman blank di Vercel</td>
+          <td>Build error atau env var kurang</td>
+          <td>Cek Vercel build logs, pastikan VITE_API_BASE_URL sudah diisi</td></tr>
+        <tr>
+          <td>Request timeout 30 detik</td>
+          <td>Render free tier "tidur"</td>
+          <td>Normal — tunggu 30 detik untuk cold start. Pertimbangkan <a href="https://render.com/docs/free" style="color:#1d4ed8">upgrade ke Starter</a></td>
+        </tr>
+        <tr>
+          <td>PDF tidak ter-download</td>
+          <td>ReportLab tidak terinstall</td>
+          <td>Pastikan <code>reportlab==4.2.2</code> ada di <code>requirements.txt</code></td>
+        </tr>
+        <tr>
+          <td>Alembic migration error</td>
+          <td>Schema belum sesuai</td>
+          <td>Jalankan <code>alembic upgrade head</code> manual di Render Shell</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- RINGKASAN URL -->
+<div class="step">
+  <div class="step-header">
+    <div class="step-num" style="background:#1d4ed8;color:white">✓</div>
+    <div>
+      <div class="step-title">Ringkasan URL Setelah Deploy</div>
+      <div class="step-sub">Bagikan ke dosen untuk demo</div>
+    </div>
+  </div>
+  <div class="step-body">
+    <table>
+      <thead><tr><th>Layanan</th><th>URL</th><th>Akun</th></tr></thead>
+      <tbody>
+        <tr><td>🖥️ Frontend (Vercel)</td><td><code>https://utris-capstone.vercel.app</code></td><td>—</td></tr>
+        <tr><td>⚙️ Backend API (Render)</td><td><code>https://utris-backend.onrender.com</code></td><td>—</td></tr>
+        <tr><td>📋 Swagger Docs</td><td><code>https://utris-backend.onrender.com/docs</code></td><td>—</td></tr>
+        <tr><td>👑 Login Admin</td><td>Via frontend</td><td><code>admin / admin123</code></td></tr>
+        <tr><td>🩻 Login Radiolog</td><td>Via frontend</td><td><code>radiolog1 / Password123!</code></td></tr>
+        <tr><td>👨‍⚕️ Login Dokter</td><td>Via frontend</td><td><code>dokter1 / Password123!</code></td></tr>
+        <tr><td>🗂️ Login Resepsionis</td><td>Via frontend</td><td><code>resepsionis1 / Password123!</code></td></tr>
+        <tr><td>🧑 Login Pasien</td><td>Via frontend</td><td><code>patient1 / Password123!</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- container -->
+<div class="footer">
+  UT-RIS Capstone Project · Kelompok C · Universitas Terbuka 2026<br>
+  <span style="opacity:.6">Panduan ini dapat dicetak: Ctrl+P → Save as PDF</span>
+</div>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERD — UT-RIS Radiology Information System</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; padding: 24px; }
+  .header { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; padding: 24px 32px; border-radius: 12px; margin-bottom: 24px; }
+  .header h1 { font-size: 24px; font-weight: 700; }
+  .header p { opacity: 0.85; margin-top: 6px; font-size: 14px; }
+  .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 20px; font-size: 12px; margin-top: 8px; }
+  .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 24px; margin-bottom: 24px; }
+  .card h2 { font-size: 16px; font-weight: 600; color: #1e3a5f; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
+  .mermaid { display: flex; justify-content: center; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; }
+  .footer { text-align: center; color: #888; font-size: 12px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📊 Entity Relationship Diagram (ERD)</h1>
+  <p>UT-RIS — Radiology Information System | Capstone Project Universitas Terbuka 2026</p>
+  <span class="badge">6 Entitas · 14 Relasi · SQLAlchemy 2.0</span>
+</div>
+
+<div class="card">
+  <h2>ERD Lengkap — Semua Entitas dan Relasi</h2>
+  <div class="mermaid">
+erDiagram
+    USERS {
+        int id PK
+        varchar username
+        varchar email
+        varchar full_name
+        varchar hashed_password
+        enum role
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    PATIENTS {
+        int id PK
+        varchar medical_record_number
+        varchar full_name
+        varchar nik
+        date date_of_birth
+        enum gender
+        varchar phone_number
+        text address
+        varchar blood_type
+        text allergies
+        int user_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    APPOINTMENTS {
+        int id PK
+        varchar appointment_number
+        int patient_id FK
+        int referring_doctor_id FK
+        int created_by_id FK
+        varchar requested_modality
+        varchar body_part
+        text clinical_indication
+        text preparation_instructions
+        timestamp scheduled_datetime
+        int estimated_duration_minutes
+        enum status
+        enum priority
+        text notes
+        varchar cancellation_reason
+        timestamp checked_in_at
+        timestamp created_at
+        timestamp updated_at
+    }
+    STUDIES {
+        int id PK
+        varchar study_instance_uid
+        varchar accession_number
+        int patient_id FK
+        int appointment_id FK
+        int referring_doctor_id FK
+        int performing_radiologist_id FK
+        enum modality
+        varchar body_part
+        text clinical_indication
+        varchar procedure_description
+        enum status
+        timestamp scheduled_at
+        timestamp started_at
+        timestamp completed_at
+        text technician_notes
+        timestamp created_at
+        timestamp updated_at
+    }
+    REPORTS {
+        int id PK
+        varchar report_number
+        int study_id FK
+        int radiologist_id FK
+        int verified_by_id FK
+        text technique
+        text findings
+        text impression
+        text recommendation
+        text internal_notes
+        enum status
+        enum priority
+        timestamp drafted_at
+        timestamp finalized_at
+        timestamp verified_at
+        timestamp amended_at
+        varchar amendment_reason
+        timestamp created_at
+        timestamp updated_at
+    }
+    STUDY_IMAGES {
+        int id PK
+        int study_id FK
+        varchar filename
+        varchar file_path
+        timestamp uploaded_at
+    }
+
+    USERS ||--o| PATIENTS : "punya akun portal"
+    PATIENTS ||--o{ APPOINTMENTS : "terdaftar di"
+    PATIENTS ||--o{ STUDIES : "menjalani"
+    APPOINTMENTS ||--o| STUDIES : "menghasilkan"
+    STUDIES ||--o| REPORTS : "dilaporkan oleh"
+    STUDIES ||--o{ STUDY_IMAGES : "memiliki gambar"
+    USERS ||--o{ APPOINTMENTS : "merujuk (dokter)"
+    USERS ||--o{ APPOINTMENTS : "membuat (resepsionis)"
+    USERS ||--o{ STUDIES : "merujuk (dokter)"
+    USERS ||--o{ STUDIES : "melaksanakan (radiolog)"
+    USERS ||--o{ REPORTS : "menulis (radiolog)"
+    USERS ||--o{ REPORTS : "verifikasi (senior)"
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:#4f46e5"></div>PK = Primary Key</div>
+    <div class="legend-item"><div class="dot" style="background:#0891b2"></div>FK = Foreign Key</div>
+    <div class="legend-item"><div class="dot" style="background:#16a34a"></div>UK = Unique Key</div>
+    <div class="legend-item"><div class="dot" style="background:#d97706"></div>|| = satu (wajib)</div>
+    <div class="legend-item"><div class="dot" style="background:#dc2626"></div">o{ = banyak (opsional)</div>
+  </div>
+</div>
+
+<div class="footer">UT-RIS Capstone Project · Kelompok C · Universitas Terbuka 2026</div>
+
+<script>mermaid.initialize({ startOnLoad: true, theme: 'default', er: { diagramPadding: 30 } });</script>
+</body>
+</html>

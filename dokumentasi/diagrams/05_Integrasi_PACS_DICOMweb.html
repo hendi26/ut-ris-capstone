@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Integrasi PACS DICOMweb — UT-RIS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#f0f4f8; padding:24px; }
+  .header { background:linear-gradient(135deg,#0369a1,#0284c7); color:white; padding:24px 32px; border-radius:12px; margin-bottom:24px; }
+  .header h1 { font-size:24px; font-weight:700; }
+  .header p { opacity:.85; margin-top:6px; font-size:14px; }
+  .badge { display:inline-block; background:rgba(255,255,255,.2); padding:3px 10px; border-radius:20px; font-size:12px; margin-top:8px; margin-right:6px; }
+  .card { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08); padding:24px; margin-bottom:24px; }
+  .card h2 { font-size:16px; font-weight:600; color:#1e3a5f; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; }
+  .mermaid { display:flex; justify-content:center; overflow-x:auto; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+  .footer { text-align:center; color:#888; font-size:12px; margin-top:24px; }
+  .endpoint-list { list-style:none; }
+  .endpoint-list li { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid #f1f5f9; }
+  .method { padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; min-width:44px; text-align:center; }
+  .get { background:#dcfce7; color:#15803d; }
+  .post { background:#dbeafe; color:#1d4ed8; }
+  .patch { background:#fef9c3; color:#854d0e; }
+  .del { background:#fee2e2; color:#991b1b; }
+  .ep-path { font-family:monospace; font-size:13px; color:#1e3a5f; font-weight:500; }
+  .ep-desc { font-size:12px; color:#64748b; margin-top:2px; }
+  .info-box { background:#f0f9ff; border-left:4px solid #0284c7; padding:14px 16px; border-radius:8px; margin-top:12px; font-size:13px; color:#0c4a6e; }
+  .warn-box { background:#fffbeb; border-left:4px solid #f59e0b; padding:14px 16px; border-radius:8px; margin-top:12px; font-size:13px; color:#78350f; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📡 Integrasi PACS via DICOMweb</h1>
+  <p>Orthanc DICOM Server · QIDO-RS · WADO-RS · Hybrid Live/Mock Strategy</p>
+  <span class="badge">QIDO-RS</span>
+  <span class="badge">WADO-RS</span>
+  <span class="badge">Orthanc v1.12.x</span>
+  <span class="badge">Fallback Mock Data</span>
+</div>
+
+<!-- Arsitektur Integrasi -->
+<div class="card">
+  <h2>Arsitektur Integrasi RIS ↔ PACS</h2>
+  <div class="mermaid">
+graph LR
+    subgraph FE["Frontend — React 18"]
+        P1["ExaminationsPage\n+ PACS Status Banner\n+ PACS Detail Modal"]
+        P2["PACS Status:\n🟢 Live / 🔵 Simulasi"]
+    end
+
+    subgraph BE["Backend — FastAPI"]
+        API["/pacs/* endpoints"]
+        SVC["PACSService\n(hybrid strategy)"]
+        MOCK["Mock DICOM Data\n5 studies simulasi\nformat DICOMweb JSON"]
+    end
+
+    subgraph PACS["Orthanc PACS (Port 8042)"]
+        QRS["QIDO-RS\n/dicom-web/studies\n(metadata query)"]
+        WRS["WADO-RS\n/dicom-web/studies/{uid}/metadata\n(detail DICOM)"]
+        SRS["/dicom-web/studies/{uid}/series\n(daftar series)"]
+        SYS["/system\n(health check)"]
+        WEB["Web Explorer\n/app/explorer.html"]
+    end
+
+    P1 <-->|"GET /pacs/health\nGET /pacs/studies/*"| API
+    API --> SVC
+    SVC -->|"httpx 5s timeout"| PACS
+    SVC -->|"ConnectError fallback"| MOCK
+    MOCK -->|"return mock JSON"| SVC
+
+    style FE fill:#dbeafe,stroke:#3b82f6
+    style BE fill:#dcfce7,stroke:#22c55e
+    style PACS fill:#fef3c7,stroke:#f59e0b
+    style MOCK fill:#f3e8ff,stroke:#a855f7
+  </div>
+  <div class="info-box">
+    <strong>Strategi Hybrid Live/Mock:</strong> Sistem mencoba koneksi ke Orthanc dengan timeout 5 detik. 
+    Jika berhasil → data DICOM nyata. Jika gagal (ConnectError) → otomatis fallback ke 5 study simulasi 
+    dalam format DICOMweb JSON standar. Tidak ada error 503 yang terekspos ke user.
+  </div>
+</div>
+
+<!-- Endpoint List -->
+<div class="grid2">
+  <div class="card">
+    <h2>API Endpoints PACS</h2>
+    <ul class="endpoint-list">
+      <li>
+        <span class="method get">GET</span>
+        <div>
+          <div class="ep-path">/pacs/health</div>
+          <div class="ep-desc">Status koneksi Orthanc. Return: connected / simulated</div>
+        </div>
+      </li>
+      <li>
+        <span class="method get">GET</span>
+        <div>
+          <div class="ep-path">/pacs/studies</div>
+          <div class="ep-desc">QIDO-RS: Cari studies by PatientID / AccessionNumber / date</div>
+        </div>
+      </li>
+      <li>
+        <span class="method get">GET</span>
+        <div>
+          <div class="ep-path">/pacs/studies/by-accession/{no}</div>
+          <div class="ep-desc">Link RIS ↔ PACS via accession number. Return data RIS + PACS</div>
+        </div>
+      </li>
+      <li>
+        <span class="method get">GET</span>
+        <div>
+          <div class="ep-path">/pacs/studies/{uid}/series</div>
+          <div class="ep-desc">QIDO-RS: Daftar series dalam satu study DICOM</div>
+        </div>
+      </li>
+      <li>
+        <span class="method get">GET</span>
+        <div>
+          <div class="ep-path">/pacs/studies/{uid}/metadata</div>
+          <div class="ep-desc">WADO-RS: Metadata DICOM lengkap (tanpa pixel data)</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Format Data DICOM (DICOMweb JSON)</h2>
+    <p style="font-size:13px;color:#64748b;margin-bottom:12px">Tag numerik DICOM sesuai standar DICOMweb (NEMA PS3.18)</p>
+    <pre style="background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;font-size:12px;overflow-x:auto;line-height:1.6">{
+  "0020000D": {        <span style="color:#86efac">// StudyInstanceUID</span>
+    "vr": "UI",
+    "Value": ["2.25.1001"]
+  },
+  "00100010": {        <span style="color:#86efac">// PatientName</span>
+    "vr": "PN",
+    "Value": [{"Alphabetic": "Ahmad Fauzi"}]
+  },
+  "00080060": {        <span style="color:#86efac">// Modality</span>
+    "vr": "CS",
+    "Value": ["CT"]
+  },
+  "00080020": {        <span style="color:#86efac">// StudyDate</span>
+    "vr": "DA",
+    "Value": ["20260601"]
+  },
+  "00080050": {        <span style="color:#86efac">// AccessionNumber</span>
+    "vr": "SH",
+    "Value": ["STD-20260601-000001"]
+  },
+  "00201208": {        <span style="color:#86efac">// NumberOfInstances</span>
+    "vr": "IS",
+    "Value": [24]
+  }
+}</pre>
+  </div>
+</div>
+
+<!-- Mock Data -->
+<div class="card">
+  <h2>Data Simulasi PACS (Mock DICOM Studies)</h2>
+  <div class="mermaid">
+graph LR
+    subgraph MOCK["5 Mock Studies — Format DICOMweb JSON"]
+        S1["StudyUID: 2.25.1001\nPasien: Ahmad Fauzi\nModalitas: CT Kepala\n24 instances\n1 series"]
+        S2["StudyUID: 2.25.1002\nPasien: Siti Rahayu\nModalitas: MRI Lumbal\n180 instances\n3 series:\n• T1 Sagittal\n• T2 Sagittal\n• STIR Coronal"]
+        S3["StudyUID: 2.25.1003\nPasien: Budi Santoso\nModalitas: CR Thorax\n2 instances\n2 series:\n• PA\n• Lateral"]
+        S4["StudyUID: 2.25.1004\nPasien: Dewi Lestari\nModalitas: DX Abdomen\n1 instance\n1 series"]
+        S5["StudyUID: 2.25.1005\nPasien: Hendra Gunawan\nModalitas: US Abdomen\n8 instances\n1 series"]
+    end
+
+    style S1 fill:#dbeafe,stroke:#3b82f6
+    style S2 fill:#dcfce7,stroke:#22c55e
+    style S3 fill:#fef9c3,stroke:#eab308
+    style S4 fill:#fce7f3,stroke:#ec4899
+    style S5 fill:#f3e8ff,stroke:#a855f7
+  </div>
+  <div class="warn-box">
+    <strong>Catatan:</strong> Data simulasi ini digunakan ketika Orthanc tidak aktif (WSL/Docker belum berjalan).
+    Saat Orthanc aktif, sistem otomatis beralih ke data DICOM nyata tanpa perubahan kode — 
+    cukup ubah ORTHANC_URL di environment variables.
+  </div>
+</div>
+
+<div class="footer">UT-RIS Capstone Project · Kelompok C · Universitas Terbuka 2026</div>
+<script>mermaid.initialize({startOnLoad:true,theme:'default',flowchart:{curve:'basis'}});</script>
+</body>
+</html>

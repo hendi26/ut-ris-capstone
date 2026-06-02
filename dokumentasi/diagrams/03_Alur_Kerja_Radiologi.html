@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Alur Kerja Radiologi — UT-RIS</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#f0f4f8; padding:24px; }
+  .header { background:linear-gradient(135deg,#047857,#059669); color:white; padding:24px 32px; border-radius:12px; margin-bottom:24px; }
+  .header h1 { font-size:24px; font-weight:700; }
+  .header p { opacity:.85; margin-top:6px; font-size:14px; }
+  .badge { display:inline-block; background:rgba(255,255,255,.2); padding:3px 10px; border-radius:20px; font-size:12px; margin-top:8px; margin-right:6px; }
+  .card { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08); padding:24px; margin-bottom:24px; }
+  .card h2 { font-size:16px; font-weight:600; color:#1e3a5f; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; }
+  .mermaid { display:flex; justify-content:center; overflow-x:auto; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+  .footer { text-align:center; color:#888; font-size:12px; margin-top:24px; }
+  .status-row { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .st { padding:5px 14px; border-radius:20px; font-size:12px; font-weight:600; }
+  .arrow { color:#94a3b8; font-size:18px; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔄 Alur Kerja Radiologi (Radiology Workflow)</h1>
+  <p>Dari Permintaan Pemeriksaan hingga Distribusi Hasil kepada Pasien dan Dokter</p>
+  <span class="badge">Appointment Flow</span>
+  <span class="badge">Study Flow</span>
+  <span class="badge">Report Flow</span>
+</div>
+
+<!-- Sequence Diagram -->
+<div class="card">
+  <h2>Sequence Diagram — Alur Lengkap Multi-Aktor</h2>
+  <div class="mermaid">
+sequenceDiagram
+    actor Dokter
+    actor Resepsionis
+    actor Radiolog
+    actor Pasien
+    participant RIS as RIS Backend
+    participant PACS as Orthanc PACS
+
+    Dokter->>Resepsionis: Minta jadwal pemeriksaan
+    Resepsionis->>RIS: POST /appointments {patient_id, modality, jadwal}
+    RIS-->>Resepsionis: 201 Created — APT-YYYYMMDD-XXXX (PENDING)
+
+    Resepsionis->>RIS: PATCH /appointments/{id} {status: confirmed}
+    RIS-->>Resepsionis: 200 OK — status: CONFIRMED
+
+    Note over Pasien,Resepsionis: Pasien tiba di unit radiologi
+    Resepsionis->>RIS: PATCH /appointments/{id} {status: checked_in}
+    RIS-->>Resepsionis: 200 OK — status: CHECKED_IN
+
+    Radiolog->>RIS: POST /studies {patient_id, modality, body_part}
+    RIS-->>Radiolog: 201 Created — STD-YYYYMMDD-XXXXXX (SCHEDULED)
+
+    Radiolog->>RIS: PATCH /studies/{id} {status: in_progress}
+    RIS-->>Radiolog: 200 OK — started_at: now()
+
+    Note over Radiolog,PACS: Citra medis diakuisisi ke PACS
+    Radiolog->>PACS: Upload DICOM images
+    PACS-->>Radiolog: StudyInstanceUID
+
+    Radiolog->>RIS: PATCH /studies/{id} {status: completed}
+    RIS-->>Radiolog: 200 OK — completed_at: now()
+
+    Radiolog->>RIS: POST /reports {study_id, findings, impression}
+    RIS-->>Radiolog: 201 Created — RPT-YYYYMMDD-XXXXXX (DRAFT)
+
+    Note over Radiolog: Senior Radiolog melakukan verifikasi
+    Radiolog->>RIS: POST /reports/{id}/finalize {verified_by_id}
+    RIS-->>Radiolog: 200 OK — FINALIZED, Study→REPORTED
+
+    Dokter->>RIS: GET /reports (filter by patient)
+    RIS-->>Dokter: 200 OK — daftar laporan FINALIZED
+
+    Pasien->>RIS: GET /patient/my-reports
+    RIS-->>Pasien: 200 OK — laporan FINALIZED saja
+
+    Pasien->>RIS: GET /patient/my-reports/{id}/export
+    RIS-->>Pasien: 200 OK — PDF file (415 KB avg)
+  </div>
+</div>
+
+<div class="grid2">
+  <!-- Appointment Status -->
+  <div class="card">
+    <h2>Status Transisi — Appointment</h2>
+    <div class="mermaid">
+stateDiagram-v2
+    [*] --> PENDING : Dibuat resepsionis
+    PENDING --> CONFIRMED : Dikonfirmasi
+    PENDING --> CANCELLED : Dibatalkan
+    CONFIRMED --> CHECKED_IN : Pasien tiba
+    CONFIRMED --> CANCELLED : Dibatalkan
+    CONFIRMED --> NO_SHOW : Tidak hadir
+    CHECKED_IN --> COMPLETED : Selesai
+    CHECKED_IN --> CANCELLED : Dibatalkan
+    COMPLETED --> [*]
+    CANCELLED --> [*]
+    NO_SHOW --> [*]
+    </div>
+    <div class="status-row">
+      <span class="st" style="background:#fef9c3;color:#854d0e">PENDING</span>
+      <span class="arrow">→</span>
+      <span class="st" style="background:#dbeafe;color:#1e40af">CONFIRMED</span>
+      <span class="arrow">→</span>
+      <span class="st" style="background:#ede9fe;color:#5b21b6">CHECKED_IN</span>
+      <span class="arrow">→</span>
+      <span class="st" style="background:#dcfce7;color:#14532d">COMPLETED</span>
+    </div>
+  </div>
+
+  <!-- Study Status -->
+  <div class="card">
+    <h2>Status Transisi — Study (Pemeriksaan)</h2>
+    <div class="mermaid">
+stateDiagram-v2
+    [*] --> SCHEDULED : Study dibuat
+    SCHEDULED --> IN_PROGRESS : Mulai pemeriksaan
+    SCHEDULED --> CANCELLED : Dibatalkan
+    IN_PROGRESS --> COMPLETED : Selesai akuisisi
+    IN_PROGRESS --> CANCELLED : Dibatalkan
+    COMPLETED --> REPORTED : Laporan difinalisasi
+    COMPLETED --> CANCELLED : Dibatalkan
+    REPORTED --> [*]
+    CANCELLED --> [*]
+    </div>
+    <div class="status-row">
+      <span class="st" style="background:#dbeafe;color:#1e40af">SCHEDULED</span>
+      <span class="arrow">→</span>
+      <span class="st" style="background:#fef9c3;color:#854d0e">IN_PROGRESS</span>
+      <span class="arrow">→</span>
+      <span class="st" style="background:#dcfce7;color:#14532d">COMPLETED</span>
+      <span class="arrow">→</span>
+      <span class="st" style="background:#ede9fe;color:#5b21b6">REPORTED</span>
+    </div>
+  </div>
+</div>
+
+<!-- Report Status -->
+<div class="card">
+  <h2>Status Transisi — Report (Laporan Radiologi)</h2>
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> DRAFT : Radiolog mulai menulis
+    DRAFT --> PENDING_REVIEW : Submit untuk review
+    PENDING_REVIEW --> FINALIZED : Diverifikasi senior\n(verifikator ≠ penulis)
+    DRAFT --> FINALIZED : Langsung finalisasi
+    FINALIZED --> AMENDED : Direvisi pasca finalisasi
+    AMENDED --> [*]
+    FINALIZED --> [*]
+
+    note right of FINALIZED
+        Constraint keamanan klinis:
+        Verifikator TIDAK BOLEH
+        sama dengan penulis laporan
+    end note
+  </div>
+  <div class="status-row">
+    <span class="st" style="background:#f1f5f9;color:#475569">DRAFT</span>
+    <span class="arrow">→</span>
+    <span class="st" style="background:#fef9c3;color:#854d0e">PENDING_REVIEW</span>
+    <span class="arrow">→</span>
+    <span class="st" style="background:#dcfce7;color:#14532d">FINALIZED</span>
+    <span class="arrow">→</span>
+    <span class="st" style="background:#dbeafe;color:#1e40af">AMENDED</span>
+    <p style="font-size:12px;color:#64748b;margin-top:8px;margin-left:4px">* Pasien hanya dapat melihat laporan berstatus FINALIZED</p>
+  </div>
+</div>
+
+<div class="footer">UT-RIS Capstone Project · Kelompok C · Universitas Terbuka 2026</div>
+<script>mermaid.initialize({startOnLoad:true,theme:'default',sequence:{diagramMarginX:30,diagramMarginY:10,actorMargin:60,width:160}});</script>
+</body>
+</html>

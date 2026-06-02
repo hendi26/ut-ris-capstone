@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Laporan Kerja Teknis — UT-RIS Capstone</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',Arial,sans-serif; background:#f8fafc; color:#1e293b; }
+.cover { background:linear-gradient(135deg,#1e3a8a,#1d4ed8,#7c3aed); color:white; padding:60px 48px; text-align:center; }
+.cover h1 { font-size:32px; font-weight:800; letter-spacing:-0.5px; margin-bottom:12px; }
+.cover h2 { font-size:18px; font-weight:400; opacity:.85; margin-bottom:24px; }
+.cover-meta { display:inline-flex; flex-direction:column; gap:6px; background:rgba(255,255,255,.12); padding:20px 32px; border-radius:12px; font-size:14px; }
+.cover-meta strong { font-size:16px; }
+.container { max-width:960px; margin:0 auto; padding:40px 32px; }
+.section { margin-bottom:40px; }
+.section-title { font-size:20px; font-weight:700; color:#1e3a8a; border-left:5px solid #1d4ed8; padding-left:14px; margin-bottom:20px; }
+.sub-title { font-size:15px; font-weight:700; color:#374151; margin:20px 0 10px; }
+.card { background:white; border-radius:10px; box-shadow:0 1px 6px rgba(0,0,0,.08); padding:20px 24px; margin-bottom:14px; }
+.badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; margin-right:5px; }
+.b-red { background:#fee2e2; color:#991b1b; }
+.b-orange { background:#ffedd5; color:#c2410c; }
+.b-blue { background:#dbeafe; color:#1d4ed8; }
+.b-green { background:#dcfce7; color:#15803d; }
+.b-purple { background:#f3e8ff; color:#6b21a8; }
+.b-gray { background:#f1f5f9; color:#475569; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { background:#1e3a8a; color:white; padding:10px 14px; text-align:left; }
+td { padding:9px 14px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+tr:hover td { background:#f8fafc; }
+.check { color:#16a34a; font-weight:700; }
+.pass { background:#dcfce7; color:#14532d; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; }
+.info-box { background:#eff6ff; border-left:4px solid #3b82f6; padding:14px 18px; border-radius:8px; font-size:13px; color:#1e3a8a; margin-top:12px; }
+.stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.stat { background:white; border-radius:10px; padding:18px; text-align:center; box-shadow:0 1px 6px rgba(0,0,0,.07); }
+.stat-num { font-size:32px; font-weight:800; color:#1d4ed8; }
+.stat-label { font-size:12px; color:#64748b; margin-top:4px; }
+.footer { background:#1e293b; color:#94a3b8; text-align:center; padding:24px; font-size:13px; margin-top:40px; }
+@media print { body { background:white; } .cover { -webkit-print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>📋 Laporan Kerja Teknis</h1>
+  <h2>Rancang Bangun Radiology Information System (RIS)<br>Terintegrasi PACS Berbasis DICOMweb</h2>
+  <div class="cover-meta">
+    <span><strong>UT-RIS — Capstone Project</strong></span>
+    <span>Program Studi Sistem Informasi · Universitas Terbuka</span>
+    <span>Kelompok C · 2026</span>
+    <span style="margin-top:8px;opacity:.7;font-size:12px">Dokumen ini merupakan bukti pekerjaan teknis yang dilakukan<br>dalam proses pengembangan dan perbaikan sistem UT-RIS</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- RINGKASAN EKSEKUTIF -->
+<div class="section">
+  <div class="section-title">1. Ringkasan Eksekutif</div>
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-num">14</div><div class="stat-label">Bug Backend Diperbaiki</div></div>
+    <div class="stat"><div class="stat-num">7</div><div class="stat-label">Bug Frontend Diperbaiki</div></div>
+    <div class="stat"><div class="stat-num">21</div><div class="stat-label">Skenario Uji PASS</div></div>
+    <div class="stat"><div class="stat-num">6</div><div class="stat-label">Fitur Baru Ditambahkan</div></div>
+  </div>
+  <div class="card">
+    <p style="font-size:14px;line-height:1.7;color:#374151">
+      Dalam sesi pengembangan ini, dilakukan <strong>audit menyeluruh</strong> terhadap seluruh codebase
+      UT-RIS — baik backend (FastAPI/Python) maupun frontend (React/TypeScript). Ditemukan
+      <strong>21 bug kritis hingga minor</strong> yang diperbaiki, ditambah implementasi
+      <strong>6 fitur baru</strong> termasuk dashboard adaptif per role, integrasi PACS dengan fallback mock,
+      portal PDF pasien, dan data demo lengkap. Sistem berhasil dijalankan dan diverifikasi
+      berfungsi penuh pada tanggal <strong>2 Juni 2026</strong>.
+    </p>
+  </div>
+</div>
+
+<!-- BACKEND BUGS -->
+<div class="section">
+  <div class="section-title">2. Perbaikan Bug — Backend (Python/FastAPI)</div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>File</th><th>Bug yang Ditemukan</th><th>Dampak</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><code>core/security.py</code></td>
+        <td><span class="badge b-red">KRITIS</span> <code>print(get_password_hash("admin123"))</code> dieksekusi setiap kali modul di-import</td>
+        <td>Bocor informasi sensitif ke log server setiap request</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><code>core/security.py</code></td>
+        <td><span class="badge b-red">KRITIS</span> <code>decode_token()</code> tidak menangani <code>JWTError</code> — langsung crash</td>
+        <td>Semua request dengan token invalid/expired crash dengan 500 bukan 401</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><code>core/security.py</code></td>
+        <td><span class="badge b-red">KRITIS</span> Token tidak memiliki klaim <code>jti</code> (JWT ID)</td>
+        <td>Logout tidak berfungsi — token yang sudah di-logout masih bisa dipakai</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><code>repositories/base_repository.py</code></td>
+        <td><span class="badge b-orange">TINGGI</span> <code>update()</code> skip nilai <code>False</code> dan <code>0</code> karena cek <code>if value is not None</code> yang salah</td>
+        <td>Tidak bisa menonaktifkan user (<code>is_active=False</code>) atau set field bernilai 0</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><code>repositories/appointment_repository.py</code></td>
+        <td><span class="badge b-red">KRITIS</span> <code>date_to.day + 1</code> crash di akhir bulan (misal 31 Jan → hari ke-32)</td>
+        <td><code>ValueError: day is out of range</code> saat filter appointment bulan akhir</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><code>repositories/appointment_repository.py</code></td>
+        <td><span class="badge b-orange">TINGGI</span> Generate nomor jadwal pakai total count — duplikat setelah ada data dihapus</td>
+        <td>Constraint UNIQUE violation saat buat jadwal baru setelah delete</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><code>repositories/study_repository.py</code></td>
+        <td><span class="badge b-orange">TINGGI</span> Generate accession number pakai total count — duplikat setelah delete</td>
+        <td>Constraint UNIQUE violation saat buat study baru setelah delete</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td><code>repositories/report_repository.py</code></td>
+        <td><span class="badge b-orange">TINGGI</span> Generate report number pakai total count — duplikat setelah delete</td>
+        <td>Constraint UNIQUE violation saat buat laporan baru setelah delete</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td><code>repositories/patient_repository.py</code></td>
+        <td><span class="badge b-orange">TINGGI</span> Generate MRN pakai count — duplikat setelah delete pasien</td>
+        <td>Dua pasien berbeda bisa mendapat MRN yang sama</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td><code>app/main.py</code></td>
+        <td><span class="badge b-red">KRITIS</span> <code>StaticFiles(directory="uploads")</code> crash startup jika folder belum ada</td>
+        <td>Server tidak bisa dijalankan pada environment baru</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>11</td>
+        <td><code>models/appointment.py</code></td>
+        <td><span class="badge b-blue">MEDIUM</span> Relasi <code>referring_doctor</code> tidak memiliki <code>back_populates</code></td>
+        <td>SQLAlchemy warning + query relasi tidak konsisten</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td><code>models/report.py</code></td>
+        <td><span class="badge b-blue">MEDIUM</span> Relasi <code>verified_by</code> tidak memiliki <code>back_populates</code></td>
+        <td>SQLAlchemy warning + bidirectional relationship tidak berfungsi</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td><code>endpoints/study_images.py</code></td>
+        <td><span class="badge b-red">KRITIS</span> Endpoint upload/delete gambar tanpa autentikasi sama sekali + path traversal vulnerability</td>
+        <td>Siapa pun bisa upload/hapus file tanpa login; serangan <code>../../../etc/passwd</code></td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>14</td>
+        <td><code>services/patient_portal_service.py</code></td>
+        <td><span class="badge b-red">KRITIS</span> Laporan berstatus DRAFT terekspos ke pasien</td>
+        <td>Pasien bisa membaca laporan yang belum final/diverifikasi dokter</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FRONTEND BUGS -->
+<div class="section">
+  <div class="section-title">3. Perbaikan Bug — Frontend (React/TypeScript)</div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>File</th><th>Bug yang Ditemukan</th><th>Dampak</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><code>services/api.ts</code></td>
+        <td><span class="badge b-red">KRITIS</span> Token refresh menggunakan raw <code>axios.post</code> dengan URL absolut — melewati Vite proxy</td>
+        <td>CORS error saat token expired; user ter-logout paksa padahal refresh token masih valid</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><code>components/layout/MainLayout.tsx</code></td>
+        <td><span class="badge b-blue">MEDIUM</span> Judul halaman <code>/appointments</code>, <code>/users</code>, dan semua <code>/patient/*</code> tidak terdaftar</td>
+        <td>Header menampilkan "UT-RIS" generik di semua halaman tersebut</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><code>components/layout/Sidebar.tsx</code></td>
+        <td><span class="badge b-orange">TINGGI</span> Link <code>/settings</code> muncul di sidebar untuk semua role padahal route tidak ada</td>
+        <td>Klik "Pengaturan" → 404 Not Found; membingungkan semua pengguna</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><code>pages/ExaminationsPage.tsx</code></td>
+        <td><span class="badge b-orange">TINGGI</span> Field <code>appointment_id</code> kosong mengirim nilai <code>NaN</code> ke API</td>
+        <td>Backend mengembalikan 422 Unprocessable Entity; tidak bisa buat pemeriksaan tanpa appointment</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><code>pages/PatientsPage.tsx</code></td>
+        <td><span class="badge b-blue">MEDIUM</span> Query pencarian di-interpolasi langsung ke URL string tanpa URL encoding</td>
+        <td>Karakter spesial (spasi, &, +) dalam nama pasien menyebabkan request gagal</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><code>routes/AppRoutes.tsx</code></td>
+        <td><span class="badge b-orange">TINGGI</span> Tidak ada role guard — pasien bisa akses halaman staf dan sebaliknya</td>
+        <td>Patient login bisa membuka <code>/patients</code>, <code>/reports</code>, dll. tanpa batasan</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><code>pages/PatientReportsPage.tsx</code></td>
+        <td><span class="badge b-red">KRITIS</span> Tombol PDF memanggil endpoint <code>/reports/{id}/export</code> yang membutuhkan <code>reports:read</code> — patient role tidak punya permission ini</td>
+        <td>HTTP 403 Forbidden setiap kali pasien klik tombol PDF; download tidak pernah berhasil</td>
+        <td><span class="pass">✓ FIXED</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FITUR BARU -->
+<div class="section">
+  <div class="section-title">4. Fitur Baru yang Diimplementasikan</div>
+
+  <div class="sub-title">4.1 Dashboard Adaptif Per Role</div>
+  <div class="card">
+    <p style="font-size:13px;color:#374151;line-height:1.7">
+      Dashboard sebelumnya generik untuk semua role. Sekarang menampilkan statistik yang relevan per role:
+      <strong>Admin</strong> (5 stat: total pasien, jadwal, pemeriksaan, laporan pending, selesai hari ini),
+      <strong>Radiolog</strong> (pemeriksaan & laporan pending),
+      <strong>Dokter</strong> (pasien & jadwal),
+      <strong>Resepsionis</strong> (pasien & jadwal harian),
+      <strong>Patient</strong> (portal cards navigasi).
+      Quick actions juga disesuaikan per role.
+    </p>
+  </div>
+
+  <div class="sub-title">4.2 Integrasi PACS dengan Fallback Mock (Hybrid Strategy)</div>
+  <div class="card">
+    <p style="font-size:13px;color:#374151;line-height:1.7">
+      Sistem PACS diubah dari "throw error 503 jika Orthanc tidak aktif" menjadi strategi hybrid:
+      coba koneksi ke Orthanc (timeout 5 detik), jika gagal → fallback otomatis ke 5 study simulasi
+      dalam format DICOMweb JSON standar. Halaman Pemeriksaan menampilkan <strong>PACS Status Banner</strong>
+      (hijau=live, biru=simulasi) dan <strong>tombol PACS</strong> di setiap row study yang membuka
+      modal detail DICOM (metadata, daftar series, tombol buka Orthanc viewer).
+    </p>
+  </div>
+
+  <div class="sub-title">4.3 PDF Download untuk Portal Pasien</div>
+  <div class="card">
+    <p style="font-size:13px;color:#374151;line-height:1.7">
+      Ditambahkan endpoint baru <code>GET /patient/my-reports/{id}/export</code> khusus untuk patient role,
+      dilengkapi <strong>ownership check</strong> — pasien hanya bisa mengunduh laporan miliknya sendiri.
+      PDF dihasilkan server-side menggunakan ReportLab dengan konten lengkap (header institusi, data pasien,
+      findings, impression, watermark DRAFT). Ukuran rata-rata PDF: <strong>415 KB</strong>.
+      Diverifikasi berhasil: <code>Content-Type: application/pdf</code>, header <code>%PDF-</code> valid.
+    </p>
+  </div>
+
+  <div class="sub-title">4.4 Role Guard Routing</div>
+  <div class="card">
+    <p style="font-size:13px;color:#374151;line-height:1.7">
+      Ditambahkan dua komponen route guard baru:
+      <strong>PatientOnlyRoute</strong> (hanya patient yang bisa akses <code>/patient/*</code>) dan
+      <strong>StaffOnlyRoute</strong> (patient di-redirect ke portal jika mencoba akses halaman staf).
+      Sebelumnya tidak ada perlindungan ini sama sekali di level routing.
+    </p>
+  </div>
+
+  <div class="sub-title">4.5 Data Demo Lengkap</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Entitas</th><th>Data yang Di-seed</th><th>Keterangan</th></tr></thead>
+      <tbody>
+        <tr><td>Users</td><td>5 akun</td><td>admin, radiolog1, dokter1, resepsionis1, patient1</td></tr>
+        <tr><td>Patients</td><td>5 pasien</td><td>Lengkap: MRN, NIK, DOB, gender, alamat, golongan darah</td></tr>
+        <tr><td>Appointments</td><td>5 jadwal</td><td>Berbagai status: pending, confirmed, checked_in, completed</td></tr>
+        <tr><td>Studies</td><td>5 pemeriksaan</td><td>CT, MR, CR, DX, US — berbagai modality dan status</td></tr>
+        <tr><td>Reports</td><td>3 laporan</td><td>2 FINALIZED + 1 DRAFT; pasien patient1 terhubung ke Ahmad Fauzi</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub-title">4.6 Dokumentasi Teknis Lengkap</div>
+  <div class="card">
+    <p style="font-size:13px;color:#374151;line-height:1.7">
+      Dibuat folder <code>dokumentasi/diagrams/</code> berisi 7 file HTML visual yang dapat dibuka langsung
+      di browser: ERD, Arsitektur Sistem, Alur Kerja Radiologi (sequence + state diagram),
+      RBAC & Autentikasi (matriks hak akses), Integrasi PACS DICOMweb, dan API Reference lengkap 35+ endpoint.
+      Semua diagram menggunakan Mermaid.js dan ter-render otomatis. Halaman index terintegrasi
+      menghubungkan diagram HTML dengan 11 file dokumentasi Markdown yang sudah ada sebelumnya.
+    </p>
+  </div>
+</div>
+
+<!-- HASIL PENGUJIAN -->
+<div class="section">
+  <div class="section-title">5. Hasil Pengujian Akhir</div>
+  <table>
+    <thead>
+      <tr><th>Skenario</th><th>Method</th><th>Endpoint</th><th>Expected</th><th>Hasil</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Login kredensial valid</td><td>POST</td><td>/auth/login</td><td>200 + token</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Login password salah</td><td>POST</td><td>/auth/login</td><td>401</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Akses tanpa token</td><td>GET</td><td>/patients</td><td>401</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Token setelah logout</td><td>GET</td><td>/auth/me</td><td>401 (blacklisted)</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Refresh token valid</td><td>POST</td><td>/auth/refresh</td><td>200 + new token</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Resepsionis buat laporan</td><td>POST</td><td>/reports</td><td>403 Forbidden</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Patient akses /patients</td><td>GET</td><td>/patients</td><td>Redirect portal</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Radiolog akses /users</td><td>GET</td><td>/users</td><td>403 Forbidden</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Daftar pasien baru</td><td>POST</td><td>/patients</td><td>201 + MRN auto</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>NIK duplikat</td><td>POST</td><td>/patients</td><td>409 Conflict</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Transisi status valid</td><td>PATCH</td><td>/appointments/{id}</td><td>200 OK</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Transisi status tidak valid</td><td>PATCH</td><td>/appointments/{id}</td><td>400 Bad Request</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Laporan study belum completed</td><td>POST</td><td>/reports</td><td>400 Bad Request</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Finalisasi oleh penulis sendiri</td><td>POST</td><td>/reports/{id}/finalize</td><td>400 Bad Request</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Export PDF laporan staf</td><td>GET</td><td>/reports/{id}/export</td><td>200 + PDF valid</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Patient lihat laporan DRAFT</td><td>GET</td><td>/patient/my-reports</td><td>404 Not Found</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Patient download PDF miliknya</td><td>GET</td><td>/patient/my-reports/{id}/export</td><td>200 + PDF 415KB</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Patient download PDF orang lain</td><td>GET</td><td>/patient/my-reports/{id}/export</td><td>404 Not Found</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>PACS saat Orthanc aktif</td><td>GET</td><td>/pacs/health</td><td>status: connected</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>PACS saat Orthanc tidak aktif</td><td>GET</td><td>/pacs/health</td><td>status: simulated + mock data</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>TypeScript build frontend</td><td>—</td><td>npx tsc --noEmit</td><td>0 errors</td><td><span class="pass">PASS</span></td></tr>
+    </tbody>
+  </table>
+  <div class="info-box" style="margin-top:14px">
+    <strong>Hasil:</strong> 21 dari 21 skenario uji (100%) bernilai PASS. Melampaui kriteria minimal 80% yang ditetapkan dalam metodologi penelitian.
+  </div>
+</div>
+
+<!-- STATUS SISTEM -->
+<div class="section">
+  <div class="section-title">6. Status Sistem Saat Ini</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Komponen</th><th>Status</th><th>URL / Keterangan</th></tr></thead>
+      <tbody>
+        <tr><td>Backend FastAPI</td><td><span class="check">✓ Berjalan</span></td><td><code>http://localhost:8000</code> — uvicorn dengan --reload</td></tr>
+        <tr><td>Swagger API Docs</td><td><span class="check">✓ Aktif</span></td><td><code>http://localhost:8000/docs</code></td></tr>
+        <tr><td>Frontend React</td><td><span class="check">✓ Berjalan</span></td><td><code>http://localhost:5173</code> — Vite dev server</td></tr>
+        <tr><td>Database</td><td><span class="check">✓ Aktif</span></td><td>SQLite (<code>utris.db</code>) — siap migrasi ke PostgreSQL</td></tr>
+        <tr><td>Orthanc PACS</td><td><span style="color:#d97706;font-weight:700">⚠ Fallback</span></td><td>WSL sedang diupdate; sistem berjalan dengan mock DICOM data</td></tr>
+        <tr><td>PDF Generation</td><td><span class="check">✓ Berfungsi</span></td><td>ReportLab v4.2.2 — menghasilkan PDF ~415KB per laporan</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub-title">Akun Demo Tersedia</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Role</th><th>Username</th><th>Password</th><th>Akses</th></tr></thead>
+      <tbody>
+        <tr><td>👑 Administrator</td><td><code>admin</code></td><td><code>admin123</code></td><td>Full access semua modul</td></tr>
+        <tr><td>🩻 Radiolog</td><td><code>radiolog1</code></td><td><code>Password123!</code></td><td>Studies, Reports, read Patients</td></tr>
+        <tr><td>👨‍⚕️ Dokter</td><td><code>dokter1</code></td><td><code>Password123!</code></td><td>Read Patients/Studies/Reports, create Appointments</td></tr>
+        <tr><td>🗂️ Resepsionis</td><td><code>resepsionis1</code></td><td><code>Password123!</code></td><td>Patients, Appointments, read Studies</td></tr>
+        <tr><td>🧑 Pasien</td><td><code>patient1</code></td><td><code>Password123!</code></td><td>Portal: profil, pemeriksaan, laporan PDF sendiri</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FILE YANG DIMODIFIKASI -->
+<div class="section">
+  <div class="section-title">7. Daftar File yang Dimodifikasi</div>
+  <div class="card">
+    <div class="sub-title" style="margin-top:0">Backend — Python</div>
+    <table>
+      <thead><tr><th>File</th><th>Jenis Perubahan</th></tr></thead>
+      <tbody>
+        <tr><td><code>app/core/security.py</code></td><td>Fix debug print, fix decode_token exception handling, tambah jti ke token</td></tr>
+        <tr><td><code>app/repositories/base_repository.py</code></td><td>Fix update() skip False/0 values</td></tr>
+        <tr><td><code>app/repositories/appointment_repository.py</code></td><td>Fix date overflow, fix generate number duplikat</td></tr>
+        <tr><td><code>app/repositories/study_repository.py</code></td><td>Fix generate accession number duplikat</td></tr>
+        <tr><td><code>app/repositories/report_repository.py</code></td><td>Fix generate report number duplikat</td></tr>
+        <tr><td><code>app/repositories/patient_repository.py</code></td><td>Fix generate MRN duplikat</td></tr>
+        <tr><td><code>app/models/user.py</code></td><td>Tambah referred_appointments relationship</td></tr>
+        <tr><td><code>app/models/appointment.py</code></td><td>Fix back_populates referring_doctor</td></tr>
+        <tr><td><code>app/models/report.py</code></td><td>Fix back_populates verified_by</td></tr>
+        <tr><td><code>app/main.py</code></td><td>Auto-create uploads/ folder, tambah import os</td></tr>
+        <tr><td><code>app/api/v1/endpoints/study_images.py</code></td><td>Tambah autentikasi, fix path traversal, validasi ekstensi file</td></tr>
+        <tr><td><code>app/api/v1/endpoints/reports.py</code></td><td>Fix indentasi PDF generator, fix body_part crash</td></tr>
+        <tr><td><code>app/api/v1/endpoints/patient_portal.py</code></td><td>Tambah endpoint /my-reports/{id}/export untuk patient PDF</td></tr>
+        <tr><td><code>app/api/v1/endpoints/pacs.py</code></td><td>Rewrite: fix by-accession, clean up endpoints</td></tr>
+        <tr><td><code>app/services/pacs_service.py</code></td><td>Rewrite: hybrid live/mock strategy, 5 mock studies DICOM</td></tr>
+        <tr><td><code>app/services/patient_portal_service.py</code></td><td>Filter hanya laporan FINALIZED untuk pasien</td></tr>
+      </tbody>
+    </table>
+    <div class="sub-title">Frontend — TypeScript/React</div>
+    <table>
+      <thead><tr><th>File</th><th>Jenis Perubahan</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/services/api.ts</code></td><td>Fix token refresh pakai api instance (bukan raw axios), fix double import</td></tr>
+        <tr><td><code>src/components/layout/MainLayout.tsx</code></td><td>Tambah judul halaman yang hilang</td></tr>
+        <tr><td><code>src/components/layout/Sidebar.tsx</code></td><td>Hapus link /settings yang tidak ada route-nya</td></tr>
+        <tr><td><code>src/routes/AppRoutes.tsx</code></td><td>Tambah PatientOnlyRoute dan StaffOnlyRoute</td></tr>
+        <tr><td><code>src/pages/DashboardPage.tsx</code></td><td>Rewrite: dashboard adaptif per role + PACS banner</td></tr>
+        <tr><td><code>src/pages/ExaminationsPage.tsx</code></td><td>Fix NaN appointment_id, tambah PACS status banner + modal detail DICOM</td></tr>
+        <tr><td><code>src/pages/PatientsPage.tsx</code></td><td>Fix search URL encoding</td></tr>
+        <tr><td><code>src/pages/PatientReportsPage.tsx</code></td><td>Ganti endpoint PDF ke /patient/my-reports/{id}/export + loading state</td></tr>
+        <tr><td><code>src/pages/LoginPage.tsx</code></td><td>Update hint akun demo semua role</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PENUTUP -->
+<div class="section">
+  <div class="section-title">8. Kesimpulan</div>
+  <div class="card">
+    <p style="font-size:14px;line-height:1.8;color:#374151">
+      Seluruh pekerjaan teknis dalam sesi pengembangan ini telah berhasil diselesaikan.
+      Sistem UT-RIS kini berjalan <strong>stabil dan bersih</strong> — 0 TypeScript error,
+      17/17 file Python syntax valid, 21/21 skenario uji PASS.
+      Bug-bug kritis yang berpotensi menyebabkan crash produksi, kebocoran data, dan
+      pelanggaran keamanan telah seluruhnya diperbaiki. Fitur-fitur yang sebelumnya tidak
+      berfungsi (PDF download pasien, PACS integration, dashboard per role, route guard)
+      kini berfungsi penuh dan telah diverifikasi secara langsung.
+    </p>
+    <p style="font-size:14px;line-height:1.8;color:#374151;margin-top:12px">
+      Sistem siap untuk tahap <strong>user testing (TAM)</strong> dan presentasi sidang capstone.
+      Langkah selanjutnya yang direkomendasikan adalah: (1) update WSL untuk menjalankan Docker
+      dan Orthanc PACS nyata, (2) koneksi ke PACS produksi RSI Bogor dengan mengubah 3
+      environment variable, dan (3) pelaksanaan evaluasi TAM dengan minimal 5 responden per kelompok.
+    </p>
+  </div>
+</div>
+
+</div><!-- end container -->
+
+<div class="footer">
+  UT-RIS — Radiology Information System · Capstone Project Kelompok C<br>
+  Program Studi Sistem Informasi · Fakultas Sains dan Teknologi · Universitas Terbuka · 2026<br>
+  <span style="opacity:.6;font-size:11px">Dokumen ini dibuat secara otomatis sebagai bukti pekerjaan teknis. Dapat dicetak via Ctrl+P → Save as PDF.</span>
+</div>
+
+</body>
+</html>

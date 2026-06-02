@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+  # ─── PostgreSQL Database ───────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: ris_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ris_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ris_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ris_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ris_user} -d ${POSTGRES_DB:-ris_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Orthanc PACS (Simulasi / Development) ────────────────────────
+  # Catatan: Orthanc digunakan sebagai PACS simulasi selama fase capstone.
+  # Integrasi ke PACS produksi RSI Bogor direncanakan setelah validasi sistem selesai.
+  orthanc:
+    image: orthancteam/orthanc:latest
+    container_name: ris_orthanc
+    restart: unless-stopped
+    ports:
+      - "4242:4242"   # DICOM port
+      - "8042:8042"   # REST API / DICOMweb port
+    environment:
+      ORTHANC__NAME: "UT-RIS Dev PACS"
+      ORTHANC__AUTHENTICATION_ENABLED: "true"
+      ORTHANC__REGISTERED_USERS: |
+        {"orthanc": "orthanc"}
+      ORTHANC__DICOM_WEB__ENABLE: "true"
+      ORTHANC__DICOM_WEB__ROOT: "/dicom-web/"
+    volumes:
+      - orthanc_data:/var/lib/orthanc/db
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -u orthanc:orthanc http://localhost:8042/system || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ─── FastAPI Backend ───────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ris_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ris_user}:${POSTGRES_PASSWORD:-ris_password}@db:5432/${POSTGRES_DB:-ris_db}
+      SECRET_KEY: ${SECRET_KEY:-changeme-in-production-use-strong-key}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      CORS_ORIGINS: "http://localhost:5173,http://localhost:3000"
+      # Orthanc PACS connection
+      ORTHANC_URL: "http://orthanc:8042"
+      ORTHANC_USER: ${ORTHANC_USER:-orthanc}
+      ORTHANC_PASSWORD: ${ORTHANC_PASSWORD:-orthanc}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      orthanc:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ─── React Frontend ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ris_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+  orthanc_data:

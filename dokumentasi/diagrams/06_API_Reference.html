@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>API Reference — UT-RIS</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#f0f4f8; padding:24px; }
+  .header { background:linear-gradient(135deg,#be123c,#e11d48); color:white; padding:24px 32px; border-radius:12px; margin-bottom:24px; }
+  .header h1 { font-size:24px; font-weight:700; }
+  .header p { opacity:.85; margin-top:6px; font-size:14px; }
+  .badge { display:inline-block; background:rgba(255,255,255,.2); padding:3px 10px; border-radius:20px; font-size:12px; margin-top:8px; margin-right:6px; }
+  .card { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08); padding:24px; margin-bottom:20px; }
+  .card h2 { font-size:15px; font-weight:700; color:#1e3a5f; margin-bottom:14px; padding-bottom:10px; border-bottom:2px solid #e2e8f0; display:flex; align-items:center; gap:8px; }
+  .ep { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid #f1f5f9; }
+  .ep:last-child { border-bottom:none; }
+  .method { padding:3px 8px; border-radius:5px; font-size:11px; font-weight:700; min-width:52px; text-align:center; flex-shrink:0; margin-top:1px; }
+  .get    { background:#dcfce7; color:#15803d; }
+  .post   { background:#dbeafe; color:#1d4ed8; }
+  .patch  { background:#fef9c3; color:#854d0e; }
+  .delete { background:#fee2e2; color:#991b1b; }
+  .ep-info { flex:1; }
+  .ep-path { font-family:monospace; font-size:13px; color:#0f172a; font-weight:600; }
+  .ep-desc { font-size:12px; color:#64748b; margin-top:3px; }
+  .ep-role { font-size:11px; color:#94a3b8; margin-top:2px; }
+  .role-tag { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10px; font-weight:600; margin-right:3px; }
+  .r-admin   { background:#fee2e2; color:#991b1b; }
+  .r-rad     { background:#dbeafe; color:#1e40af; }
+  .r-dok     { background:#dcfce7; color:#14532d; }
+  .r-res     { background:#fef9c3; color:#854d0e; }
+  .r-pat     { background:#f3e8ff; color:#6b21a8; }
+  .r-all     { background:#f1f5f9; color:#475569; }
+  .base-url  { background:#1e293b; color:#7dd3fc; padding:10px 16px; border-radius:8px; font-family:monospace; font-size:13px; margin-bottom:20px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+  .footer { text-align:center; color:#888; font-size:12px; margin-top:24px; }
+  .count-badge { background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:10px; font-size:12px; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📋 API Reference — UT-RIS</h1>
+  <p>Dokumentasi lengkap seluruh endpoint REST API · Auto-generated via FastAPI + Swagger</p>
+  <span class="badge">35+ Endpoints</span>
+  <span class="badge">OpenAPI 3.0</span>
+  <span class="badge">Docs: /docs</span>
+</div>
+
+<div class="base-url">Base URL: http://localhost:8000/api/v1</div>
+
+<div class="grid2">
+
+<!-- AUTH -->
+<div class="card">
+  <h2>🔐 Authentication <span class="count-badge">5 endpoints</span></h2>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/auth/login</div>
+      <div class="ep-desc">Login, dapatkan access + refresh token</div>
+      <div class="ep-role"><span class="r-all role-tag">Public</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/auth/refresh</div>
+      <div class="ep-desc">Perbarui access token dengan refresh token</div>
+      <div class="ep-role"><span class="r-all role-tag">Public</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/auth/logout</div>
+      <div class="ep-desc">Blacklist refresh token, paksa re-login</div>
+      <div class="ep-role"><span class="r-all role-tag">Authenticated</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/auth/change-password</div>
+      <div class="ep-desc">Ganti password dengan verifikasi password lama</div>
+      <div class="ep-role"><span class="r-all role-tag">Authenticated</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/auth/me</div>
+      <div class="ep-desc">Data profil user yang sedang login</div>
+      <div class="ep-role"><span class="r-all role-tag">Authenticated</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- USERS -->
+<div class="card">
+  <h2>👤 Users <span class="count-badge">5 endpoints</span></h2>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/users?page=&size=</div>
+      <div class="ep-desc">Daftar semua pengguna (paginasi)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/users</div>
+      <div class="ep-desc">Buat pengguna baru</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/users/{user_id}</div>
+      <div class="ep-desc">Detail pengguna berdasarkan ID</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method patch">PATCH</span>
+    <div class="ep-info">
+      <div class="ep-path">/users/{user_id}</div>
+      <div class="ep-desc">Update data pengguna (nama, email, role)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method delete">DEL</span>
+    <div class="ep-info">
+      <div class="ep-path">/users/{user_id}</div>
+      <div class="ep-desc">Hapus pengguna (tidak bisa hapus diri sendiri)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- PATIENTS -->
+<div class="card">
+  <h2>🧑‍⚕️ Patients <span class="count-badge">4 endpoints</span></h2>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/patients?page=&size=&search=</div>
+      <div class="ep-desc">Daftar pasien dengan pencarian nama/MRN</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/patients</div>
+      <div class="ep-desc">Daftarkan pasien baru, MRN auto-generate</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-res role-tag">Resepsionis</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/patients/{patient_id}</div>
+      <div class="ep-desc">Detail pasien berdasarkan ID</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method patch">PATCH</span>
+    <div class="ep-info">
+      <div class="ep-path">/patients/{patient_id}</div>
+      <div class="ep-desc">Update data pasien</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-res role-tag">Resepsionis</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- APPOINTMENTS -->
+<div class="card">
+  <h2>📅 Appointments <span class="count-badge">5 endpoints</span></h2>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/appointments?page=&status=&patient_id=</div>
+      <div class="ep-desc">Daftar jadwal dengan filter status/pasien</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/appointments</div>
+      <div class="ep-desc">Buat jadwal pemeriksaan baru</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-res role-tag">Resepsionis</span><span class="r-dok role-tag">Dokter</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/appointments/{id}</div>
+      <div class="ep-desc">Detail jadwal beserta data pasien</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method patch">PATCH</span>
+    <div class="ep-info">
+      <div class="ep-path">/appointments/{id}</div>
+      <div class="ep-desc">Update jadwal (status, waktu, catatan)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-res role-tag">Resepsionis</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/appointments/{id}/cancel?reason=</div>
+      <div class="ep-desc">Batalkan jadwal dengan alasan</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-res role-tag">Resepsionis</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- STUDIES -->
+<div class="card">
+  <h2>🩻 Studies <span class="count-badge">7 endpoints</span></h2>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/studies?page=&status=&modality=&patient_id=</div>
+      <div class="ep-desc">Daftar pemeriksaan dengan filter lengkap</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/studies</div>
+      <div class="ep-desc">Buat pemeriksaan, UID & accession auto-generate</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/studies/{study_id}</div>
+      <div class="ep-desc">Detail pemeriksaan dengan relasi</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method patch">PATCH</span>
+    <div class="ep-info">
+      <div class="ep-path">/studies/{study_id}</div>
+      <div class="ep-desc">Update status pemeriksaan (validasi transisi)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/studies/{study_id}/images</div>
+      <div class="ep-desc">Daftar gambar yang diupload ke study</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/studies/{study_id}/upload</div>
+      <div class="ep-desc">Upload gambar ke study (jpg/png/webp)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method delete">DEL</span>
+    <div class="ep-info">
+      <div class="ep-path">/studies/{study_id}/images/{filename}</div>
+      <div class="ep-desc">Hapus gambar dari study</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div class="card">
+  <h2>📄 Reports <span class="count-badge">7 endpoints</span></h2>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/reports?page=&status=&radiologist_id=</div>
+      <div class="ep-desc">Daftar laporan dengan filter</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span><span class="r-dok role-tag">Dokter</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/reports</div>
+      <div class="ep-desc">Buat laporan (study harus berstatus completed)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/reports/{report_id}</div>
+      <div class="ep-desc">Detail laporan lengkap dengan study & pasien</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span><span class="r-dok role-tag">Dokter</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method patch">PATCH</span>
+    <div class="ep-info">
+      <div class="ep-path">/reports/{report_id}</div>
+      <div class="ep-desc">Edit laporan (hanya penulis atau admin)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/reports/{report_id}/finalize</div>
+      <div class="ep-desc">Finalisasi laporan (verifikator ≠ penulis)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method post">POST</span>
+    <div class="ep-info">
+      <div class="ep-path">/reports/{report_id}/amend</div>
+      <div class="ep-desc">Amandemen laporan yang sudah final</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/reports/{report_id}/export</div>
+      <div class="ep-desc">Export PDF (ReportLab, ~415KB/laporan)</div>
+      <div class="ep-role"><span class="r-admin role-tag">Admin</span><span class="r-rad role-tag">Radiolog</span><span class="r-dok role-tag">Dokter</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- PATIENT PORTAL -->
+<div class="card">
+  <h2>🏥 Patient Portal <span class="count-badge">6 endpoints</span></h2>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/patient/me</div>
+      <div class="ep-desc">Profil pasien yang sedang login</div>
+      <div class="ep-role"><span class="r-pat role-tag">Patient Only</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/patient/my-studies</div>
+      <div class="ep-desc">Daftar pemeriksaan milik pasien</div>
+      <div class="ep-role"><span class="r-pat role-tag">Patient Only</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/patient/my-studies/{study_id}</div>
+      <div class="ep-desc">Detail pemeriksaan (ownership check)</div>
+      <div class="ep-role"><span class="r-pat role-tag">Patient Only</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/patient/my-reports</div>
+      <div class="ep-desc">Daftar laporan FINALIZED saja</div>
+      <div class="ep-role"><span class="r-pat role-tag">Patient Only</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/patient/my-reports/{report_id}</div>
+      <div class="ep-desc">Detail laporan (ownership check)</div>
+      <div class="ep-role"><span class="r-pat role-tag">Patient Only</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/patient/my-reports/{report_id}/export</div>
+      <div class="ep-desc">Download PDF laporan sendiri (ownership check)</div>
+      <div class="ep-role"><span class="r-pat role-tag">Patient Only</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- PACS & DASHBOARD -->
+<div class="card">
+  <h2>📡 PACS + 📊 Dashboard <span class="count-badge">6 endpoints</span></h2>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/dashboard/stats</div>
+      <div class="ep-desc">Statistik real-time (pasien, jadwal, laporan, dll)</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/pacs/health</div>
+      <div class="ep-desc">Status koneksi Orthanc (connected / simulated)</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/pacs/studies?patient_id=&accession=&modality=</div>
+      <div class="ep-desc">QIDO-RS: Cari studies di PACS</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/pacs/studies/by-accession/{no}</div>
+      <div class="ep-desc">Link RIS ↔ PACS via accession number</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/pacs/studies/{uid}/series</div>
+      <div class="ep-desc">QIDO-RS: Daftar series dalam study</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+  <div class="ep">
+    <span class="method get">GET</span>
+    <div class="ep-info">
+      <div class="ep-path">/pacs/studies/{uid}/metadata</div>
+      <div class="ep-desc">WADO-RS: Metadata DICOM lengkap</div>
+      <div class="ep-role"><span class="r-all role-tag">Semua Staf</span></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end grid2 -->
+
+<div class="footer">UT-RIS Capstone Project · Kelompok C · Universitas Terbuka 2026 · Full docs: http://localhost:8000/docs</div>
+</body>
+</html>
