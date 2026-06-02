@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # ─── ENUM types ───────────────────────────────────────────────────
     userrole = postgresql.ENUM(
-        "admin", "dokter", "radiolog", "resepsionis", "patient",
+        "admin", "dokter", "radiolog", "resepsionis", "patient", "patient,"
         name="userrole", create_type=True
     )
     gender = postgresql.ENUM("L", "P", name="gender", create_type=True)
