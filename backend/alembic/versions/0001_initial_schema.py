@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # ─── ENUM types ───────────────────────────────────────────────────
     userrole = postgresql.ENUM(
-        "admin", "dokter", "radiolog", "resepsionis",
+        "admin", "dokter", "radiolog", "resepsionis", "patient",
         name="userrole", create_type=True
     )
     gender = postgresql.ENUM("L", "P", name="gender", create_type=True)
@@ -63,7 +63,15 @@ def upgrade() -> None:
         sa.Column("email", sa.String(255), nullable=False, unique=True),
         sa.Column("full_name", sa.String(255), nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
-        sa.Column("role", sa.Enum("admin", "dokter", "radiolog", "resepsionis", name="userrole"), nullable=False, server_default="resepsionis"),
+        sa.Column(
+            "role",
+            postgresql.ENUM(
+                "admin", "dokter", "radiolog", "resepsionis", "patient",
+                name="userrole", create_type=False
+            ),
+            nullable=False,
+            server_default="resepsionis"
+        ),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
@@ -79,7 +87,11 @@ def upgrade() -> None:
         sa.Column("full_name", sa.String(255), nullable=False),
         sa.Column("nik", sa.String(16), nullable=True, unique=True),
         sa.Column("date_of_birth", sa.Date(), nullable=False),
-        sa.Column("gender", sa.Enum("L", "P", name="gender"), nullable=False),
+        sa.Column(
+            "gender",
+            postgresql.ENUM("L", "P", name="gender", create_type=False),
+            nullable=False
+        ),
         sa.Column("phone_number", sa.String(20), nullable=True),
         sa.Column("address", sa.Text(), nullable=True),
         sa.Column("blood_type", sa.String(5), nullable=True),
@@ -104,8 +116,21 @@ def upgrade() -> None:
         sa.Column("preparation_instructions", sa.Text(), nullable=True),
         sa.Column("scheduled_datetime", sa.DateTime(timezone=True), nullable=False),
         sa.Column("estimated_duration_minutes", sa.Integer(), nullable=False, server_default="30"),
-        sa.Column("status", sa.Enum("pending", "confirmed", "checked_in", "completed", "cancelled", "no_show", name="appointmentstatus"), nullable=False, server_default="pending"),
-        sa.Column("priority", sa.Enum("routine", "urgent", "emergency", name="appointmentpriority"), nullable=False, server_default="routine"),
+        sa.Column(
+            "status",
+            postgresql.ENUM(
+                "pending", "confirmed", "checked_in", "completed", "cancelled", "no_show",
+                name="appointmentstatus", create_type=False
+            ),
+            nullable=False,
+            server_default="pending"
+        ),
+        sa.Column(
+            "priority",
+            postgresql.ENUM("routine", "urgent", "emergency", name="appointmentpriority", create_type=False),
+            nullable=False,
+            server_default="routine"
+        ),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("cancellation_reason", sa.String(500), nullable=True),
         sa.Column("checked_in_at", sa.DateTime(timezone=True), nullable=True),
@@ -127,11 +152,23 @@ def upgrade() -> None:
         sa.Column("appointment_id", sa.Integer(), sa.ForeignKey("appointments.id", ondelete="SET NULL"), nullable=True),
         sa.Column("referring_doctor_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
         sa.Column("performing_radiologist_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("modality", sa.Enum("CR", "DX", "CT", "MR", "US", "MG", "NM", "PT", "XA", "RF", name="modality"), nullable=False),
+        sa.Column(
+            "modality",
+            postgresql.ENUM("CR", "DX", "CT", "MR", "US", "MG", "NM", "PT", "XA", "RF", name="modality", create_type=False),
+            nullable=False
+        ),
         sa.Column("body_part", sa.String(100), nullable=False),
         sa.Column("clinical_indication", sa.Text(), nullable=True),
         sa.Column("procedure_description", sa.String(255), nullable=True),
-        sa.Column("status", sa.Enum("scheduled", "in_progress", "completed", "reported", "cancelled", name="studystatus"), nullable=False, server_default="scheduled"),
+        sa.Column(
+            "status",
+            postgresql.ENUM(
+                "scheduled", "in_progress", "completed", "reported", "cancelled",
+                name="studystatus", create_type=False
+            ),
+            nullable=False,
+            server_default="scheduled"
+        ),
         sa.Column("scheduled_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
@@ -160,8 +197,21 @@ def upgrade() -> None:
         sa.Column("impression", sa.Text(), nullable=False),
         sa.Column("recommendation", sa.Text(), nullable=True),
         sa.Column("internal_notes", sa.Text(), nullable=True),
-        sa.Column("status", sa.Enum("draft", "pending_review", "finalized", "amended", name="reportstatus"), nullable=False, server_default="draft"),
-        sa.Column("priority", sa.Enum("routine", "urgent", "stat", name="reportpriority"), nullable=False, server_default="routine"),
+        sa.Column(
+            "status",
+            postgresql.ENUM(
+                "draft", "pending_review", "finalized", "amended",
+                name="reportstatus", create_type=False
+            ),
+            nullable=False,
+            server_default="draft"
+        ),
+        sa.Column(
+            "priority",
+            postgresql.ENUM("routine", "urgent", "stat", name="reportpriority", create_type=False),
+            nullable=False,
+            server_default="routine"
+        ),
         sa.Column("drafted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("finalized_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("verified_at", sa.DateTime(timezone=True), nullable=True),

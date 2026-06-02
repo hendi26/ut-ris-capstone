@@ -79,10 +79,13 @@ def create_application() -> FastAPI:
     # Static Files
     # ─────────────────────────────────────────────────────────
 
+    from pathlib import Path
+    Path("uploads").mkdir(exist_ok=True) 
+    
     app.mount(
-        "/uploads",
-        StaticFiles(directory="uploads"),
-        name="uploads",
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
     )
 
     # ─────────────────────────────────────────────────────────
@@ -132,10 +135,15 @@ def create_application() -> FastAPI:
                     print("password: admin123\n")
 
         elif settings.ENVIRONMENT == "production":
-
-            # Jalankan migrasi Alembic otomatis di production
-            import subprocess
-            subprocess.run(["alembic", "upgrade", "head"], check=True)
+            try:
+                import subprocess
+                subprocess.run(
+                    ["alembic", "upgrade", "head"],
+                    check=True
+                    ) 
+                print("✅ Migration completed")
+            except Exception as e:
+                print(f"⚠ Migration skipped: {e}")
 
             # Seed admin jika belum ada
             async with AsyncSessionLocal() as session:
