@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Stethoscope, Filter, ExternalLink, Activity, Wifi, Images, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { studyService, StudyStatus, Modality, Study } from "@/services/studyService";
+import { useAuthStore } from "@/store/authStore";
 import { pacsService } from "@/services/pacsService";
 import { PageLoader } from "@/components/common/LoadingSpinner";
 import ProtectedContent from "@/components/common/ProtectedContent";
@@ -196,16 +197,17 @@ function PacsDetailModal({ study, onClose }: PacsDetailModalProps) {
 
 
 /* ─── Image Viewer Modal ────────────────────────────────────────────── */
-const API_BASE = import.meta.env.VITE_API_URL ?? "https://hendiateng26-utris-backend.hf.space";
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "https://hendiateng26-utris-backend.hf.space";
 
 function ImageViewerModal({ studyId, studyName, onClose }: { studyId: number | null; studyName: string; onClose: () => void }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const isOpen = studyId !== null;
 
+  const token = useAuthStore(state => state.accessToken);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["study-images", studyId],
     queryFn: async () => {
-      const token = localStorage.getItem("access_token");
       const res = await fetch(`${API_BASE}/api/v1/studies/${studyId}/images`, {
         headers: { Authorization: `Bearer ${token}` },
       });
