@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Stethoscope, Filter, ExternalLink, Activity, Wifi } from "lucide-react";
+import { Plus, Stethoscope, Filter, ExternalLink, Activity, Wifi, Images, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { studyService, StudyStatus, Modality, Study } from "@/services/studyService";
 import { pacsService } from "@/services/pacsService";
@@ -194,6 +194,114 @@ function PacsDetailModal({ study, onClose }: PacsDetailModalProps) {
   );
 }
 
+
+/* ─── Image Viewer Modal ────────────────────────────────────────────── */
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://hendiateng26-utris-backend.hf.space";
+
+function ImageViewerModal({ studyId, studyName, onClose }: { studyId: number | null; studyName: string; onClose: () => void }) {
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const isOpen = studyId !== null;
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["study-images", studyId],
+    queryFn: async () => {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_BASE}/api/v1/studies/${studyId}/images`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Gagal memuat gambar");
+      return res.json() as Promise<{ study_id: number; total_images: number; images: string[] }>;
+    },
+    enabled: isOpen,
+  });
+
+  const images = data?.images ?? [];
+  const total = images.length;
+
+  const prev = () => setCurrentIdx(i => (i - 1 + total) % total);
+  const next = () => setCurrentIdx(i => (i + 1) % total);
+
+  // Reset index saat study berubah
+  useEffect(() => { setCurrentIdx(0); }, [studyId]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={onClose}>
+      <div
+        className="relative bg-gray-900 rounded-xl shadow-2xl w-full max-w-3xl mx-4 overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 bg-gray-800 border-b border-gray-700">
+          <div>
+            <h3 className="font-semibold text-white text-sm">{studyName}</h3>
+            {total > 0 && (
+              <p className="text-xs text-gray-400 mt-0.5">{currentIdx + 1} / {total} gambar</p>
+            )}
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="relative flex items-center justify-center bg-black min-h-[400px]">
+          {isLoading ? (
+            <div className="text-gray-400 text-sm">Memuat gambar...</div>
+          ) : isError || total === 0 ? (
+            <div className="text-center text-gray-500 py-16">
+              <Images className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Gambar tidak tersedia</p>
+            </div>
+          ) : (
+            <>
+              <img
+                src={`${API_BASE}${images[currentIdx]}`}
+                alt={`Image ${currentIdx + 1}`}
+                className="max-h-[500px] max-w-full object-contain"
+              />
+              {total > 1 && (
+                <>
+                  <button
+                    onClick={prev}
+                    className="absolute left-3 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={next}
+                    className="absolute right-3 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Thumbnail strip */}
+        {total > 1 && (
+          <div className="flex gap-2 px-4 py-3 bg-gray-800 overflow-x-auto">
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentIdx(i)}
+                className={`flex-shrink-0 w-14 h-14 rounded overflow-hidden border-2 transition-colors ${
+                  i === currentIdx ? "border-blue-400" : "border-transparent opacity-60 hover:opacity-100"
+                }`}
+              >
+                <img src={`${API_BASE}${img}`} alt={`thumb-${i}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Study Form Modal ──────────────────────────────────────────────── */
 interface StudyFormData {
   patient_id: number;
@@ -287,6 +395,8 @@ export default function ExaminationsPage() {
   const [statusFilter, setStatusFilter] = useState<StudyStatus | "">("");
   const [showForm, setShowForm] = useState(false);
   const [pacsStudy, setPacsStudy] = useState<Study | null>(null);
+  const [imageStudyId, setImageStudyId] = useState<number | null>(null);
+  const [imageStudyName, setImageStudyName] = useState<string>("");
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -399,6 +509,15 @@ export default function ExaminationsPage() {
                             <Activity className="w-3.5 h-3.5" />
                             PACS
                           </button>
+                          {/* Lihat Gambar */}
+                          <button
+                            onClick={() => { setImageStudyId(study.id); setImageStudyName(`${study.modality} — ${study.body_part}`); }}
+                            title="Lihat gambar radiologi"
+                            className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                          >
+                            <Images className="w-3.5 h-3.5" />
+                            Gambar
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -421,6 +540,7 @@ export default function ExaminationsPage() {
 
       <StudyFormModal isOpen={showForm} onClose={() => setShowForm(false)} />
       <PacsDetailModal study={pacsStudy} onClose={() => setPacsStudy(null)} />
+      <ImageViewerModal studyId={imageStudyId} studyName={imageStudyName} onClose={() => setImageStudyId(null)} />
     </div>
   );
 }
