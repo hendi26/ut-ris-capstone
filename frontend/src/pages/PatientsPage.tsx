@@ -14,7 +14,7 @@ interface Patient {
   date_of_birth: string;
   gender: "L" | "P";
   phone_number: string | null;
-  blood_type: string | null;
+  address: string | null;
 }
 
 interface PatientListResponse {
@@ -84,7 +84,7 @@ export default function PatientsPage() {
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Nama Pasien</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Tgl. Lahir</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">Jenis Kelamin</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-600">Gol. Darah</th>
+                <th className="text-left px-6 py-3 font-medium text-gray-600">Alamat</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-600">No. Telepon</th>
               </tr>
             </thead>
@@ -107,7 +107,7 @@ export default function PatientsPage() {
                         {patient.gender === "L" ? "Laki-laki" : "Perempuan"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">{patient.blood_type ?? "-"}</td>
+                    <td className="px-6 py-4 text-gray-600">{patient.address ?? "-"}</td>
                     <td className="px-6 py-4 text-gray-600">{patient.phone_number ?? "-"}</td>
                   </tr>
                 ))
